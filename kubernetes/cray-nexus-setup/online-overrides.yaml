@@ -1,0 +1,263 @@
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+#
+# Example Nexus Repository Manager (NXRM) configuration for "online" installs.
+# Note that curated repositories are changed from "group" to "proxy"
+# repositories, and the corresponding patch release repositories are removed.
+---
+schema: v2
+name: nexus-online
+version: 1.0.0
+failOnFirstError: true
+repositories:
+  docker: registry.local
+  helm: charts.local
+charts:
+- name: cray-nexus
+  version: 0.5.1
+  namespace: nexus
+  values:
+    sonatype-nexus:
+      service:
+        ports:
+        - name: group-registry
+          port: 5000
+          targetPort: 5000
+        - name: default-registry
+          port: 5003
+          targetPort: 5003
+    istio:
+      ingress:
+        hosts:
+          registry:
+            routes:
+              # Writes goto port 5003 (local hosted registry).  NXRM does not (as of
+              # yet) support pushing to group repositories, see
+              # https://issues.sonatype.org/browse/NEXUS-10471. Until then, a port
+              # must be exposed in order to enable images to be pushed to this
+              # registry. See also, https://stackoverflow.com/a/54590014 which
+              # describes using a reverse proxy to direct writes to the desired
+              # registry.
+              - match:
+                - method:
+                    exact: HEAD
+                  uri:
+                    regex: "^/v(1|2)/.*/blobs/sha256:[A-Fa-f0-9]{64}$"
+                - method:
+                    exact: POST
+                - method:
+                    exact: PUT
+                - method:
+                    exact: PATCH
+                - method:
+                    exact: DELETE
+                port: 5003
+                headers:
+                  request:
+                    add:
+                      X-WEBAUTH-USER: admin
+                    remove:
+                    - Authorization
+              # Reads goto port 5000 (group registry)
+              - port: 5000
+                headers:
+                  request:
+                    add:
+                      X-WEBAUTH-USER: admin
+                    remove:
+                    - Authorization
+
+- name: cray-nexus-setup
+  version: 0.3.0
+  namespace: nexus
+  values:
+    blobStores:
+      file:
+        dvds:
+          name: dvds
+      s3:
+        dvds:
+          name: dvds
+          bucketConfiguration:
+            bucket:
+              name: nexus
+
+    repositories:
+
+      helm-charts:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/helm-charts/
+
+      mirror-sle-15sp1-all-products:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/os/rpms/sles/15sp1-all/Products/
+          group: null
+        shasta-1.3.0: null
+
+      mirror-sle-15sp1-all-updates:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/os/rpms/sles/15sp1-all/Updates/
+          group: null
+        shasta-1.3.0: null
+
+      mirror-opensuse-leap-15:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/os/rpms/opensuse/15/
+          group: null
+        shasta-1.3.0: null
+
+      badger:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/badger/badger/
+          group: null
+        shasta-1.3.0: null
+
+      cos-sle-15sp1-compute:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/shasta-general/rpms/cray-sles15-sp1-cn/
+          group: null
+        shasta-1.3.0: null
+
+      cos-sle-15sp1-management:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/shasta-general/rpms/cray-sles15-sp1-ncn/
+          group: null
+        shasta-1.3.0: null
+
+      cos-images-sle-15sp1-compute:
+        shasta-1.3:
+          format: raw
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/isos/sles15sp1/
+          group: null
+        shasta-1.3.0: null
+
+      ct-tests-sle-15sp1-management:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/ct-tests/sle15_sp1_ncn/
+          group: null
+        shasta-1.3.0: null
+
+      shasta-firmware:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/shasta-firmware/shasta-firmware/
+          group: null
+        shasta-1.3.0: null
+
+      thirdparty-sle-15sp1-compute:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/shasta-general/rpms/third-party-sles15sp1-cn/
+          group: null
+        shasta-1.3.0: null
+
+      thirdparty-sle-15sp1-management:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/shasta-general/rpms/third-party-sles15sp1-ncn/
+          group: null
+        shasta-1.3.0: null
+
+      sma-sle-15sp1-compute:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/sma/rpms/cray-sles15-sp1-cn/
+          group: null
+        shasta-1.3.0: null
+
+      sma-sle-15sp1-management:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/sma/rpms/cray-sles15-sp1-ncn/
+          group: null
+        shasta-1.3.0: null
+
+      sma-crayctldeploy-sle-15sp1-management:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/sma/crayctldeploy/
+          group: null
+        shasta-1.3.0: null
+
+      sms-crayctldeploy-sle-15sp1-management:
+        shasta-1.3:
+          proxy:
+            remoteUrl: http://dst.us.cray.com/dstrepo/shasta-cd-1.3/bloblets/shasta-general/crayctldeploy/
+          group: null
+        shasta-1.3.0: null
+
+    additionalRepositories:
+
+    - name: dtr.dev.cray.com
+      format: docker
+      storage:
+        blobStoreName: latest
+        writePolicy: ALLOW
+      proxy:
+        remoteUrl: https://dtr.dev.cray.com/
+
+    - name: registry.local
+      format: docker
+      storage:
+        blobStoreName: latest
+      group:
+        memberNames:
+        - registry-1.3
+        - dtr.dev.cray.com
+      docker:
+        httpPort: 5000
+
+    - name: helmrepo.dev.cray.com
+      format: helm
+      storage:
+        blobStoreName: latest
+      proxy:
+        remoteUrl: http://helmrepo.dev.cray.com:8080/
+
+    # DVDs - SLE-15-SP1 Installer
+    - name: dvd-SLE-15-SP1-Installer-DVD-x86_64-GM-DVD1
+      format: raw
+      storage:
+        blobStoreName: dvds
+      proxy:
+        remoteUrl: http://car.dev.cray.com/artifactory/mirror-sles15sp1-isos2/SLE-15-SP1-Installer-DVD-x86_64-GM-DVD1/
+    - name: dvd-SLE-15-SP1-Installer-DVD-x86_64-QU2-DVD1
+      format: raw
+      storage:
+        blobStoreName: dvds
+      proxy:
+        remoteUrl: http://car.dev.cray.com/artifactory/mirror-sles15sp1-isos2/SLE-15-SP1-Installer-DVD-x86_64-QU2-DVD1/
+    - name: dvd-SLE-15-SP1-Installer-DVD-x86_64-QU2-DVD2
+      format: raw
+      storage:
+        blobStoreName: dvds
+      proxy:
+        remoteUrl: http://car.dev.cray.com/artifactory/mirror-sles15sp1-isos2/SLE-15-SP1-Installer-DVD-x86_64-QU2-DVD2/
+
+    # DVDs - SLE-15-SP1 Packages
+    - name: dvd-SLE-15-SP1-Packages-x86_64-GM-DVD1
+      format: raw
+      storage:
+        blobStoreName: dvds
+      proxy:
+        remoteUrl: http://car.dev.cray.com/artifactory/mirror-sles15sp1-isos2/SLE-15-SP1-Packages-x86_64-GM-DVD1/
+    - name: dvd-SLE-15-SP1-Packages-x86_64-QU2-DVD1
+      format: raw
+      storage:
+        blobStoreName: dvds
+      proxy:
+        remoteUrl: http://car.dev.cray.com/artifactory/mirror-sles15sp1-isos2/SLE-15-SP1-Packages-x86_64-QU2-DVD1/
+    - name: dvd-SLE-15-SP1-Packages-x86_64-QU2-DVD2
+      format: raw
+      storage:
+        blobStoreName: dvds
+      proxy:
+        remoteUrl: http://car.dev.cray.com/artifactory/mirror-sles15sp1-isos2/SLE-15-SP1-Packages-x86_64-QU2-DVD2/

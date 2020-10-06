@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+
+# Note: Requires the create_task groovy script
+
+command -v jq >/dev/null 2>&1 || { echo >&2 "command not found: jq"; exit 1; }
+
+get-task-id() {
+    echo -n >&2 "Getting rebuild Yum repodata tasks..."
+
+    curl -sfk -X GET \
+        "${URL}/v1/tasks?type=repository.yum.rebuild.metadata" \
+        -H "Accept: application/json" | jq -r ".items[] | select (.name|test(\"${1}\")) | .id"
+    status=$?
+
+    if [[ $status -eq 0 ]]; then echo >&2 " OK"; else echo >&2 " FAIL"; exit $status; fi
+}
+
+. "$(dirname "$0")/nexus-ready"
+
+[[ $# -eq 1 ]] || { echo >&2 "usage: ${0##*/} REPOSITORY"; exit 1; }
+repo="$1"
+
+taskid="$(get-task-id "$repo")"
+
+if [[ -z "$taskid" ]]; then
+    echo -n >&2 "Creating task to rebuild Yum repodata for ${repo}..."
+
+    status="$(curl -sfk -w "\ncode=%{http_code}" -X POST \
+        "${URL}/v1/script/create_task/run" \
+        -H "Content-Type: application/json" \
+        -d "{\"name\": \"Rebuild repodata - $repo\", \"typeId\": \"repository.yum.rebuild.metadata\", \"schedule_type\": \"manual\", \"taskProperties\": {\"repositoryName\": \"$repo\"}}")"
+    output="${status%$'\n'code=*}"
+    status="${status##*$'\n'code=}"
+
+    if [[ "$status" = "200" ]]; then echo >&2 " OK"; else echo >&2 " $status FAIL"; exit 22; fi
+    echo "$output" | jq . >&2
+
+    taskid="$(get-task-id "$repo")"
+    [[ -n "$taskid" ]] || { echo >&2 "Failed to get task ID"; exit 2; }
+fi
+
+echo -n >&2 "Running rebuild task ${taskid}..."
+status="$(curl -sfk -w "%{http_code}" -X POST "${URL}/v1/tasks/${taskid}/run")"
+if [[ "$status" = "204" ]]; then echo >&2 " OK"; else echo " $status FAIL"; exit 22; fi
+
+curl -sfk -X GET "${URL}/v1/tasks/$taskid" -H "Accept: application/json" | jq .

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+
+command -v docker >/dev/null 2>&1 || { echo >&2 "command not found: docker"; exit 1; }
+
+NEXUS_CONTAINER_NAME="${1-"nexus"}"
+NEXUS_VOLUME_NAME="${NEXUS_CONTAINER_NAME}-data"
+
+if docker inspect "$NEXUS_CONTAINER_NAME" >/dev/null 2>&1; then
+    echo -n >&2 "removed container: "
+    docker rm -f "$NEXUS_CONTAINER_NAME" || exit
+fi
+
+if docker volume inspect "$NEXUS_VOLUME_NAME" >/dev/null 2>&1; then
+    echo -n >&2 "removed volume: "
+    docker volume rm "$NEXUS_VOLUME_NAME" || exit
+fi

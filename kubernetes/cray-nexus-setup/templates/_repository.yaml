@@ -1,0 +1,183 @@
+{{- /* Copyright 2020 Hewlett Packard Enterprise Development LP */ -}}
+
+{{- define "cray-nexus-setup.repository" -}}
+
+  {{- if not (hasKey . "name") -}}
+    {{- fail (printf "%+v: missing required attribute: name" . ) -}}
+  {{- end -}}
+  {{- if not (hasKey . "format") -}}
+    {{- fail (printf "%v: missing required attribute: format" $.name) -}}
+  {{- end -}}
+
+  {{- /* Automatically set repository type */ -}}
+  {{- if not (hasKey . "type") -}}
+    {{- if hasKey (default dict .proxy) "remoteUrl" -}}
+      {{- $_ := set . "type" "proxy" -}}
+    {{- else if hasKey (default dict .group) "memberNames" -}}
+      {{- $_ := set . "type" "group" -}}
+    {{- else -}}
+      {{- $_ := set . "type" "hosted" -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- if not (hasKey . "online") -}}
+    {{- $_ := set . "online" true -}}
+  {{- end -}}
+
+  {{- if not (hasKey . "storage") -}}
+    {{- $_ := set . "storage" dict -}}
+  {{- end -}}
+  {{- if not (hasKey .storage "blobStoreName") -}}
+    {{- $_ := set .storage "blobStoreName" "default" -}}
+  {{- end -}}
+  {{- if not (hasKey .storage "strictContentTypeValidation") -}}
+    {{- $_ := set .storage "strictContentTypeValidation" false -}}
+  {{- end -}}
+  {{- if eq $.type "hosted" -}}
+    {{- if not (hasKey .storage "writePolicy") -}}
+      {{- $_ := set .storage "writePolicy" "ALLOW_ONCE" -}}
+    {{- end -}}
+  {{- end -}}{{- /* type==hosted */ -}}
+
+  {{- if or (eq $.type "hosted") (eq $.type "proxy") -}}
+    {{- if hasKey . "cleanup" -}}
+      {{- if not (hasKey .cleanup "policyNames") -}}
+        {{- $_ := set .cleanup "policyNames" list -}}
+      {{- end -}}
+    {{- else -}}
+      {{- $_ := set . "cleanup" nil -}}
+    {{- end  -}}{{- /* cleanup */ -}}
+  {{- end -}}
+
+  {{- /* Set proxy repository options */ -}}
+  {{- if eq $.type "proxy" -}}
+    {{- if not (hasKey .proxy "remoteUrl") -}}
+      {{- fail (printf "%v: missing required attribute: proxy.remoteUrl" $.name) -}}
+    {{- end -}}
+    {{- if not (hasKey .proxy "contentMaxAge") -}}
+      {{- $_ := set .proxy "contentMaxAge" 1440 -}}
+    {{- end -}}
+    {{- if not (hasKey .proxy "metadataMaxAge") -}}
+      {{- $_ := set .proxy "metadataMaxAge" 5 -}}{{- /* Nexus default: 1440 */ -}}
+    {{- end -}}
+
+    {{- if not (hasKey . "negativeCache") -}}
+      {{- $_ := set . "negativeCache" dict -}}
+    {{- end -}}
+    {{- if not (hasKey .negativeCache "enabled") -}}
+      {{- $_ := set .negativeCache "enabled" false -}}{{- /* Nexus default: true */ -}}
+    {{- end -}}
+    {{- if not (hasKey .negativeCache "timeToLive") -}}
+      {{- $_ := set .negativeCache "timeToLive" 0 -}}{{- /* Nexus default: 1440 */ -}}
+    {{- end -}}
+
+    {{- if not (hasKey . "httpClient") -}}
+      {{- $_ := set . "httpClient" dict -}}
+    {{- end -}}
+    {{- if not (hasKey .httpClient "blocked") -}}
+      {{- $_ := set .httpClient "blocked" false -}}
+    {{- end -}}
+    {{- if not (hasKey .httpClient "autoBlock") -}}
+      {{- $_ := set .httpClient "autoBlock" false -}}{{- /* Nexus default: true */ -}}
+    {{- end -}}
+
+    {{- if hasKey .httpClient "connection" -}}
+      {{- if not (hasKey .httpClient.connection "retries") -}}
+        {{- $_ := set .httpClient.connection "retries" 0 -}}
+      {{- end -}}
+      {{- if not (hasKey .httpClient.connection "userAgentSuffix") -}}
+        {{- $_ := set .httpClient.connection "userAgentSuffix" nil -}}
+      {{- end -}}
+      {{- if not (hasKey .httpClient.connection "timeout") -}}
+        {{- $_ := set .httpClient.connection "timeout" 60 -}}
+      {{- end -}}
+      {{- if not (hasKey .httpClient.connection "enableCircularRedirects") -}}
+        {{- $_ := set .httpClient.connection "enableCircularRedirects" false -}}
+      {{- end -}}
+      {{- if not (hasKey .httpClient.connection "enableCookies") -}}
+        {{- $_ := set .httpClient.connection "enableCookies" false -}}
+      {{- end -}}
+    {{- else -}}
+      {{ $_ := set .httpClient "connection" nil -}}
+    {{- end -}}{{- /* connection */ -}}
+
+    {{- if hasKey .httpClient "authentication" -}}
+      {{- if not (hasKey .httpClient.authentication "type") -}}
+        {{- $_ := set .httpClient.authentication "type" "username" -}}
+      {{- end -}}
+      {{- if not (hasKey .httpClient.authentication "username") -}}
+        {{- $_ := set .httpClient.authentication "username" nil -}}
+      {{- end -}}
+      {{- if not (hasKey .httpClient.authentication "ntlmHost") -}}
+        {{- $_ := set .httpClient.authentication "ntlmHost" nil -}}
+      {{- end -}}
+      {{- if not (hasKey .httpClient.authentication "ntlmDomain") -}}
+        {{- $_ := set .httpClient.authentication "ntlmDomain" nil -}}
+      {{- end -}}
+    {{- else -}}
+      {{ $_ := set .httpClient "authentication" nil -}}
+    {{- end -}}
+
+    {{- /* Set routingRule */ -}}
+    {{- if not (hasKey . "routingRule") -}}
+      {{- $_ := set . "routingRule" nil -}}
+    {{- end -}}
+  {{- end -}}{{- /* type==proxy */ -}}
+
+  {{- /* Set group repository options */ -}}
+  {{- if eq $.type "group" -}}
+    {{- /* Set group */ -}}
+    {{- if not (hasKey .group "memberNames") -}}
+      {{- fail (printf "%v: missing required attribute: group.memberNames" .name) -}}
+    {{- end -}}
+  {{- end -}}{{- /* type==group */ -}}
+
+  {{- /* Set docker repository options */ -}}
+  {{- if eq $.format "docker" -}}
+    {{- if not (hasKey . "docker") -}}
+      {{- $_ := set . "docker" dict -}}
+    {{- end -}}
+    {{- if not (hasKey .docker "v1Enabled") -}}
+      {{- $_ := set .docker "v1Enabled" false -}}
+    {{- end -}}
+    {{- if not (hasKey .docker "forceBasicAuth") -}}
+      {{- $_ := set .docker "forceBasicAuth" false -}}{{- /* Nexus default: true */ -}}
+    {{- end -}}
+    {{- if not (hasKey .docker "httpPort") -}}
+      {{- $_ := set .docker "httpPort" nil -}}{{- /* Nexus default: 8082 */ -}}
+    {{- end -}}
+    {{- if not (hasKey .docker "httpsPort") -}}
+      {{- $_ := set .docker "httpsPort" nil -}}{{- /* Nexus default: 8083 */ -}}
+    {{- end -}}
+
+    {{- if eq $.type "proxy" -}}
+      {{- /* Set dockerProxy */ -}}
+      {{- if not (hasKey . "dockerProxy") -}}
+        {{- $_ := set . "dockerProxy" dict -}}
+      {{- end -}}
+      {{- if not (hasKey .dockerProxy "indexType") -}}
+        {{- $_ := set .dockerProxy "indexType" "HUB" -}}
+      {{- end -}}
+      {{- if not (hasKey .dockerProxy "indexUrl") -}}
+        {{- $_ := set .dockerProxy "indexUrl" nil -}}
+      {{- end -}}
+    {{- end -}}{{- /* type==proxy */ -}}
+  {{- end -}}{{- /* format==docker */ -}}
+
+  {{- /* Set yum repository options */ -}}
+  {{- if and (eq $.format "yum") (eq $.type "hosted") -}}
+    {{- if not (hasKey . "yum") -}}
+      {{- $_ := set . "yum" dict -}}
+    {{- end -}}
+    {{- if not (hasKey .yum "repodataDepth") -}}
+      {{- $_ := set .yum "repodataDepth" 0 -}}{{- /* Nexus default: 5 */ -}}
+    {{- end -}}
+    {{- if not (hasKey .yum "deployPolicy") -}}
+      {{- $_ := set .yum "deployPolicy" "STRICT" -}}
+    {{- end -}}
+  {{- end -}}
+
+---
+{{ toYaml . }}
+
+{{- end -}}

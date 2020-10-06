@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+
+command -v yq >/dev/null 2>&1 || { echo >&2 "command not found: yq"; exit 1; }
+
+. "$(dirname "$0")/nexus-ready"
+
+WORKDIR="$(mktemp -d)"
+trap "{ rm -rf '$WORKDIR'; }" EXIT
+
+# Create blobstores
+while [[ $# -gt 0 ]]; do
+    nblobs=$(yq r -d '*' -X -c -l "$1")
+
+    for (( i=0; i<nblobs; i++ )); do
+        tmpfile="${WORKDIR}/blobstore-${#}-${i}.yaml"
+        yq r -d $i -X --stripComments "$1" > "$tmpfile"
+
+        blobstore_name="$(yq r "$tmpfile" name)"
+
+        # Determine type of blobstore
+        if [[ -n "$(yq r "$tmpfile" path)" ]]; then
+            blobstore_type="file"
+        elif [[ -n "$(yq r "$tmpfile" bucketConfiguration)" ]]; then
+            blobstore_type="s3"
+            [[ -z $S3_ACCESS_KEY ]] || yq w -i "$tmpfile" 'bucketConfiguration.bucketSecurity.accessKeyId' "$S3_ACCESS_KEY"
+            [[ -z $S3_SECRET_KEY ]] || yq w -i "$tmpfile" 'bucketConfiguration.bucketSecurity.secretAccessKey' "$S3_SECRET_KEY"
+            [[ -z $S3_ENDPOINT ]]   || yq w -i "$tmpfile" 'bucketConfiguration.advancedBucketConnection.endpoint' "$S3_ENDPOINT"
+        else
+            echo >&2 "error: unknown blobstore type: ${blobstore_name}"
+            exit 1
+        fi
+
+        # First try to create
+        echo -n >&2 "Creating ${blobstore_type} blobstore: ${blobstore_name}... "
+        yq r -j "$tmpfile" | curl -sfk -w "%{http_code}" \
+            --connect-timeout "${CURL_CONNECT_TIMEOUT:-10}" \
+            --retry-connrefused \
+            -X POST "${URL}/beta/blobstores/${blobstore_type}" \
+            -H 'Accept: application/json' \
+            -H 'Content-Type:application/json' \
+            -d @-
+        status=$?
+        if [[ $status -eq 0 ]]; then
+            echo >&2 " OK created"
+        else
+            echo >&2 " FAIL"
+
+            # Failed to create, try to update
+            echo -n >&2 "Updating ${blobstore_type} blobstore: ${blobstore_name}... "
+            yq r -j "$tmpfile" | curl -sfk -w "%{http_code}" \
+                --connect-timeout "${CURL_CONNECT_TIMEOUT:-10}" \
+                --retry-connrefused \
+                -X PUT "${URL}/beta/blobstores/${blobstore_type}/${blobstore_name}" \
+                -H 'Accept: application/json' \
+                -H 'Content-Type:application/json' \
+                -d @-
+            status=$?
+            if [[ $status -eq 0 ]]; then
+                echo >&2 " OK updated"
+            else
+                echo >&2 " FAIL"
+                exit $status
+            fi
+        fi
+    done
+
+    shift
+done
+

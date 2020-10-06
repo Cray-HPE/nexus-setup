@@ -1,0 +1,46 @@
+{{- /* Copyright 2020 Hewlett Packard Enterprise Development LP */ -}}
+
+{{- define "cray-nexus-setup.repositories" -}}
+
+  {{- /* Assmeble list of repositories */ -}}
+  {{- $repos := list -}}
+  {{- range .Values.repositories -}}
+    {{- $repos = concat $repos (values .) -}}
+  {{- end -}}
+  {{- $repos = concat (compact $repos) (compact .Values.additionalRepositories) -}}
+
+  {{- /* Discover weights */ -}}
+  {{- $weights := list -}}
+  {{- range $repos -}}
+    {{- /* Set weight */ -}}
+    {{- if hasKey . "_weight" -}}
+      {{- $_ := set . "_weight" (._weight | int) -}}
+    {{- else -}}
+      {{- $_ := set . "_weight" 0 -}}
+    {{- end -}}
+    {{- $weights = append $weights (repeat ._weight "x") | uniq -}}
+  {{- end -}}
+
+  {{- /* Sort non-group repositories based on weight */ -}}
+  {{- range $w := $weights | sortAlpha -}}
+    {{- range $repos -}}
+      {{- if not (hasKey (default dict .group) "memberNames") -}}
+        {{- if eq (len $w) (._weight | int) -}}
+          {{- include "cray-nexus-setup.repository" (omit . "_weight") -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- /* Sort group repositories based on weight */ -}}
+  {{- range $w := $weights | sortAlpha -}}
+    {{- range $repos -}}
+      {{- if hasKey (default dict .group) "memberNames" -}}
+        {{- if eq (len $w) (._weight | int) -}}
+          {{- include "cray-nexus-setup.repository" (omit . "_weight") -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+
+{{- end -}}
