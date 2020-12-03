@@ -1,0 +1,97 @@
+{{- /* Copyright 2020 Hewlett Packard Enterprise Development LP */ -}}
+
+{{- define "cray-nexus-setup.blobStore" -}}
+
+  {{- if not (hasKey . "name") -}}
+    {{- fail (printf "%+v: missing required attribute: name" . ) -}}
+  {{- end -}}
+
+  {{- if hasKey . "softQuota" -}}
+    {{- if not (hasKey .softQuota "type") -}}
+      {{- $_ := set .softQuota "type" "spaceRemainingQuota" -}}
+    {{- end -}}
+    {{- if not (hasKey .softQuota "limit") -}}
+      {{- $_ := set .softQuota "limit" 0 -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $_ := set . "softQuota" nil -}}
+  {{- end -}}{{- /* softQuota */ -}}
+
+  {{- if hasKey . "bucketConfiguration" -}}
+    {{- /* type: s3 */ -}}
+
+    {{- if not (hasKey .bucketConfiguration "bucket") -}}
+      {{- $_ := set .bucketConfiguration "bucket" dict -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.bucket "region") -}}
+      {{- /* region is ignored but needs to be set to an accepted value */ -}}
+      {{- $_ := set .bucketConfiguration.bucket "region" "us-east-1" -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.bucket "name") -}}
+      {{- fail (printf "%v: missing required attribute: bucketConfiguration.bucket.name" $.name) -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.bucket "prefix") -}}
+      {{- $_ := set .bucketConfiguration.bucket "prefix" .name -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.bucket "expiration") -}}
+      {{- $_ := set .bucketConfiguration.bucket "expiration" 0 -}}
+    {{- end -}}
+
+    {{- if hasKey .bucketConfiguration "encryption" -}}
+      {{- if not (hasKey .bucketConfiguration.encryption "encryptionType") -}}
+        {{- $_ := set .bucketConfiguration.encryption "encryptionType" "s3ManagedEncryption" -}}
+      {{- end -}}
+      {{- if not (hasKey .bucketConfiguration.encryption "encryptionKey") -}}
+        {{- /* Optional and only valid for "kmsManagedEncryption" type */ -}}
+        {{- $_ := set .bucketConfiguration.encryption "encryptionKey" nil -}}
+      {{- end -}}
+    {{- end -}}
+
+    {{- if not (hasKey .bucketConfiguration "bucketSecurity") -}}
+      {{- $_ := set .bucketConfiguration "bucketSecurity" dict -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.bucketSecurity "accessKeyId") -}}
+      {{- /* Rely on nexus-blobstores-create to populate this based on the
+             S3_ACCESS_KEY environment variable, mounted from a Secret */ -}}
+      {{- $_ := set .bucketConfiguration.bucketSecurity "accessKeyId" nil -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.bucketSecurity "secretAccessKey") -}}
+      {{- /* Rely on nexus-blobstores-create to populate this based on the
+             S3_SECRET_KEY environment variable, mounted from a Secret */ -}}
+      {{- $_ := set .bucketConfiguration.bucketSecurity "secretAccessKey" nil -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.bucketSecurity "role") -}}
+      {{- $_ := set .bucketConfiguration.bucketSecurity "role" "" -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.bucketSecurity "sessionToken") -}}
+      {{- $_ := set .bucketConfiguration.bucketSecurity "sessionToken" "" -}}
+    {{- end -}}
+
+    {{- if not (hasKey .bucketConfiguration "advancedBucketConnection") -}}
+      {{- $_ := set .bucketConfiguration "advancedBucketConnection" dict -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.advancedBucketConnection "endpoint") -}}
+      {{- /* Rely on nexus-blobstores-create to populate this based on the
+             S3_ENDPOINT environment variable, mounted from a Secret */ -}}
+      {{- $_ := set .bucketConfiguration.advancedBucketConnection "endpoint" nil -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.advancedBucketConnection "signerType") -}}
+      {{- $_ := set .bucketConfiguration.advancedBucketConnection "signerType" "DEFAULT" -}}
+    {{- end -}}
+    {{- if not (hasKey .bucketConfiguration.advancedBucketConnection "forcePathStyle") -}}
+      {{- $_ := set .bucketConfiguration.advancedBucketConnection "forcePathStyle" true -}}
+    {{- end -}}
+
+  {{- else -}}
+    {{- /* type: file */ -}}
+
+    {{- if not (hasKey . "path") -}}
+      {{- $_ := set . "path" (printf "/nexus-data/blobs/%s" .name) -}}
+    {{- end -}}
+
+  {{- end -}}
+
+---
+{{ toYaml . }}
+
+{{- end -}}

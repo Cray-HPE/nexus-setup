@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+
+command -v docker >/dev/null 2>&1 || { echo >&2 "command not found: docker"; exit 1; }
+
+case "$1" in
+    -h|--help|help)
+        echo >&2 "usage: nexus-create [CONTAINER [IMAGE]]"
+        exit 1
+        ;;
+esac
+
+NEXUS_CONTAINER_NAME="${1-"nexus"}"
+NEXUS_CONTAINER_IMAGE="${2:-"sonatype/nexus3:3.25.0"}"
+NEXUS_VOLUME_NAME="${NEXUS_CONTAINER_NAME}-data"
+NEXUS_VOLUME_MOUNT="/nexus-data:rw"
+
+docker inspect "$NEXUS_CONTAINER_NAME" >/dev/null 2>&1 && { echo >&2 "container exists: $NEXUS_CONTAINER_NAME"; exit 1; }
+
+nexus_volume="${NEXUS_VOLUME_NAME}:${NEXUS_VOLUME_MOUNT}"
+
+# Create Nexus volume if not already present
+if docker volume inspect "$NEXUS_VOLUME_NAME" >/dev/null 2>&1 ; then
+    echo >&2 "warning: volume exists, skipping initialization: $NEXUS_VOLUME_NAME"
+else
+    echo >&2 "initializing volume: $NEXUS_VOLUME_NAME"
+    docker run --rm -v "$nexus_volume" busybox /bin/sh -c "
+mkdir -p /nexus-data/etc
+cat > /nexus-data/etc/nexus.properties << EOF
+nexus.onboarding.enabled=false
+nexus.scripts.allowCreation=true
+nexus.security.randompassword=false
+EOF
+chown -Rv 200:200 /nexus-data
+chmod -Rv u+rwX,go+rX,go-w /nexus-data
+" || exit
+fi
+
+# Create Nexus container
+# Note: Ports 5000 and 5003 need to be consistent with the ports of docker
+# repositories being used!
+docker run -d -v "$nexus_volume" \
+    -p 8081:8081 \
+    -p 5000:5000 \
+    -p 5003:5003 \
+    --name "$NEXUS_CONTAINER_NAME" \
+    "$NEXUS_CONTAINER_IMAGE"
+
+echo -n >&2 "Starting..."
+while ! curl -sf http://localhost:8081/service/rest/v1/status/writable >/dev/null 2>&1; do
+    echo -n >&2 "."
+    sleep 5
+done
+echo >&2 "OK"

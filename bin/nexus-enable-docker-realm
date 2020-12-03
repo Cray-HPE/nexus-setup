@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+
+command -v yq >/dev/null 2>&1 || { echo >&2 "command not found: yq"; exit 1; }
+
+. "$(dirname "$0")/nexus-ready"
+
+echo -n >&2 "Enable Docker security realm..."
+
+curl -sfk "${URL}/beta/security/realms/active" \
+    | yq w - '[+]' 'DockerToken' -j \
+    | curl -sfk -w "%{http_code}" -X PUT \
+        "${URL}/beta/security/realms/active" \
+        -H 'Content-Type: application/json' \
+        -d @-
+status=$?
+
+if [[ $status -eq 0 ]]; then echo >&2 " OK"; else echo >&2 " FAIL"; exit $status; fi

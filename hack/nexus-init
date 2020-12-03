@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+
+export PATH="$PATH:$(dirname "$0")/../bin"
+
+set -x
+
+while ! nexus-ready; do
+  echo >&2 "trying again in 10 seconds"
+  sleep 10
+done
+
+set -e
+
+nexus-upload-script $(dirname "$0")/../groovy/*.groovy >&2
+nexus-enable-anonymous-access >&2
+nexus-remove-default-repos >&2
+
+#nexus-enable-rut-auth >&2
+
+$(dirname "$0")/config/generate.sh
+nexus-blobstores-create $(dirname "$0")/config/blobstores.yaml >&2
+nexus-repositories-create $(dirname "$0")/config/repositories.yaml >&2
+
+nexus-enable-docker-realm >&2
+
+#echo "adminpwd" | nexus-change-password admin >&2

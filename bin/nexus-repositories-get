@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+
+command -v yq >/dev/null 2>&1 || { echo >&2 "command not found: yq"; exit 1; }
+
+. "$(dirname "$0")/nexus-ready"
+
+# Temporary file for output from Nexus API
+repos="$(mktemp)"
+trap "rm -f '$repos'" EXIT
+
+# Fetch configs
+curl -sfk "${URL}/beta/repositories" | yq r -P - > "$repos"
+
+# Expand configs to separate YAML docs
+nrepos=$(yq r -l "$repos")
+for (( i=0; i<nrepos; i++ )); do
+    echo "---"
+    yq r -P "$repos" "[$i]"
+    echo
+done

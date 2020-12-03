@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+
+if [[ $# -ne 2 ]]; then
+    echo >&2 "usage: ${0##*/} SRC-DIRECTORY DEST-REPOSITORY"
+    exit 1
+fi
+
+path="$1"
+repo="$2"
+shift 2
+
+if [[ ! -d "$path" ]]; then
+    echo >&2 "error: no such directory: $path"
+    exit 1
+fi
+
+command -v parallel >/dev/null 2>&1 || { echo >&2 "command not found: parallel"; exit 1; }
+
+. "$(dirname "$0")/nexus-ready"
+
+upload-asset-yum() {
+    file="$1"
+    asset="/${file##$path}"
+
+    status=""
+    while [[ "$status" != "204" && "$status" != "400" ]]; do
+        status="$(curl -sfk \
+            --retry-connrefused \
+            --retry "${CURL_RETRY:-36}" \
+            --retry-delay "${CURL_RETRY_DELAY:-5}" \
+            --max-time "${CURL_MAX_TIME:-180}" \
+            -w "%{http_code} %{size_upload} %{time_total} %{speed_upload}\n" \
+            -X POST "${URL}/v1/components?repository=${repo}" \
+            -F "yum.directory=$(dirname "$asset")" \
+            -F "yum.asset.filename=$(basename "$asset")" \
+            -F "yum.asset=@${file}")"
+        echo "$status"
+        status="${status%% *}"
+    done
+
+    if [[ "$status" = "204" ]]; then echo "created"; else echo "exists"; fi
+}
+
+export URL path repo
+export -f upload-asset-yum
+
+find "$path" -name '*.rpm' -type f \
+    | time parallel --line-buffer --tag \
+        "-j${PARALLEL_JOBS:-32}" \
+        "${PARALLEL_FLAGS}" \
+        upload-asset-yum

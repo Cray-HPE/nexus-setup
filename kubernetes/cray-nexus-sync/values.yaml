@@ -1,0 +1,125 @@
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+
+nameOverride: ""
+fullnameOverride: ""
+
+images:
+
+  # In order to have access to quay.io/skopeo/stable to upload docker
+  # repositories, will need to make sure it is loaded into bis.local:5000.
+  docker:
+    repository: quay.io/skopeo/stable
+    tag: latest
+    pullPolicy: Always
+
+defaultImage:
+  repository: dtr.dev.cray.com/cray/cray-nexus-setup
+  tag: 0.5.2
+  pullPolicy: IfNotPresent
+
+nodeSelector:
+  bis: "True"
+
+blob: /var/cray/vbis/www/shasta-cd-repo
+
+repositories:
+
+  dtr.dev.cray.com:
+    format: docker
+    src: container-images/dtr.dev.cray.com
+    dest: registry.local
+  docker.io:
+    format: docker
+    src: container-images/docker.io
+    dest: registry.local
+  quay.io:
+    format: docker
+    src: container-images/quay.io
+    dest: registry.local
+
+  charts:
+    format: helm
+    src: helm-charts
+    dest: https://packages.local/repository/charts-1.3/
+
+  mirror-1.3.0-sle-15sp1-all-products:
+    format: yum
+    src: bloblets/os/rpms/sles/15sp1-all/Products/
+    dest: https://packages.local/repository/mirror-1.3.0-sle-15sp1-all-products/
+  mirror-1.3.0-sle-15sp1-all-updates:
+    format: yum
+    src: bloblets/os/rpms/sles/15sp1-all/Updates/
+    dest: https://packages.local/repository/mirror-1.3.0-sle-15sp1-all-updates/
+  mirror-1.3.0-opensuse-leap-15:
+    format: yum
+    src: bloblets/os/rpms/opensuse/15/
+    dest: https://packages.local/repository/mirror-1.3.0-opensuse-leap-15/
+
+  badger-1.3.0:
+    format: yum
+    src: bloblets/badger/badger/
+    dest: https://packages.local/repository/badger-1.3.0/
+
+  cos-1.3.0-sle-15sp1-comp:
+    format: yum
+    src: bloblets/shasta-general/rpms/cray-sles15-sp1-cn/
+    dest: https://packages.local/repository/cos-1.3.0-sle-15sp1-compute/
+  cos-1.3.0-sle-15sp1-mgmt:
+    format: yum
+    src: bloblets/shasta-general/rpms/cray-sles15-sp1-ncn/
+    dest: https://packages.local/repository/cos-1.3.0-sle-15sp1-management/
+
+  cos-images-1.3.0-sle-15sp1-comp:
+    format: raw
+    src: isos/sles15sp1/
+    dest: https://packages.local/repository/cos-images-1.3.0-sle-15sp1-compute/
+
+  ct-tests-1.3.0-sle-15sp1-mgmt:
+    format: yum
+    src: bloblets/ct-tests/sle15_sp1_ncn/
+    dest: https://packages.local/repository/ct-tests-1.3.0-sle-15sp1-management/
+
+  shasta-firmware-1.3.0:
+    format: yum
+    src: bloblets/shasta-firmware/shasta-firmware/
+    dest: https://packages.local/repository/shasta-firmware-1.3.0
+
+  thirdparty-1.3.0-sle-15sp1-comp:
+    format: yum
+    src: bloblets/shasta-general/rpms/third-party-sles15sp1-cn/
+    dest: https://packages.local/repository/thirdparty-1.3.0-sle-15sp1-compute/
+  thirdparty-1.3.0-sle-15sp1-mgmt:
+    format: yum
+    src: bloblets/shasta-general/rpms/third-party-sles15sp1-ncn/
+    dest: https://packages.local/repository/thirdparty-1.3.0-sle-15sp1-management/
+
+  pe-ccd-1.3.0-sle-15sp1-mgmt:
+    enabled: false
+    format: yum
+    src: bloblets/pe-base/crayctldeploy/
+    dest: https://packages.local/repository/pe-crayctldeploy-1.3.0-sle-15sp1-management/
+
+  sma-1.3.0-sle-15sp1-comp:
+    format: yum
+    src: bloblets/sma/rpms/cray-sles15-sp1-cn/
+    dest: https://packages.local/repository/sma-1.3.0-sle-15sp1-compute/
+  sma-1.3.0-sle-15sp1-mgmt:
+    format: yum
+    src: bloblets/sma/rpms/cray-sles15-sp1-ncn/
+    dest: https://packages.local/repository/sma-1.3.0-sle-15sp1-management/
+  sma-ccd-1.3.0-sle-15sp1-mgmt:
+    format: yum
+    src: bloblets/sma/crayctldeploy/
+    dest: https://packages.local/repository/sma-crayctldeploy-1.3.0-sle-15sp1-management/
+
+  sms-ccd-1.3.0-sle-15sp1-mgmt:
+    format: yum
+    src: bloblets/shasta-general/crayctldeploy/
+    dest: https://packages.local/repository/sms-crayctldeploy-1.3.0-sle-15sp1-management/
+
+  sms-1.3.0-sle-14sp1-mgmt:
+    enabled: false
+    format: yum
+    src: null
+    dest: https://packages.local/repository/sms-1.3.0-sle-15sp1-managementa/
+

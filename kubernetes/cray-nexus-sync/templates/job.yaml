@@ -1,0 +1,80 @@
+{{- /* Copyright 2020 Hewlett Packard Enterprise Development LP */ -}}
+
+{{- range $name, $_ := .Values.repositories }}
+{{- if or (not (hasKey . "enabled")) .enabled }}
+  {{- if hasKey $.Values.images .format }}
+    {{- $_ := set . "image" (index $.Values.images .format) -}}
+  {{- else }}
+    {{- $_ := set . "image" $.Values.defaultImage -}}
+  {{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sync-{{ $name }}
+  labels:
+    nexus: sync
+    nexus-repository-format: {{ .format }}
+{{ include "cray-nexus-sync.labels" $ | indent 4 }}
+spec:
+  template:
+    metadata:
+      name: sync-{{ $name }}
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        nexus: sync
+        nexus-repository-format: {{ .format }}
+{{ include "cray-nexus-sync.labels" $ | indent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with $.Values.nodeSelector }}
+      nodeSelector: {{ toYaml . | trim | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: sync
+          image: "{{ .image.repository }}:{{ .image.tag }}"
+          imagePullPolicy: "{{ .image.pullPolicy }}"
+          {{- if eq .format "docker" }}
+          args:
+          - sync
+          - --src
+          - dir
+          - --dest
+          - docker
+          - --dest-no-creds
+          - --dest-tls-verify=false
+          - --scoped
+          - "/blob/{{ .src }}"
+          - "{{ .dest }}"
+          {{- else }}
+          command:
+          - /bin/bash
+          - -c
+          - |-
+            set -ex
+
+            {{ $dest := .dest | urlParse -}}
+            export NEXUS_URL="{{ urlJoin (omit $dest "path" "query" "opaque" "fragment") }}"
+
+            while ! nexus-ready; do
+                echo >&2 "trying again in 10 seconds"
+                sleep 10
+            done
+
+            {{ if or (eq .format "yum") (eq .format "helm") (eq .format "raw") -}}
+            nexus-upload-repo-{{ .format }} "/blob/{{ .src }}" "{{ $dest.path | trimPrefix "/repository" | trimAll "/" }}" >&2
+            {{ else -}}
+            {{- fail (printf "Unsupported format: %s" .format) -}}
+            {{ end -}}
+          {{- end }}
+          volumeMounts:
+          - mountPath: /blob
+            name: blob
+      volumes:
+      - name: blob
+        hostPath:
+          type: Directory
+          path: {{ $.Values.blob }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,8 @@
+@Library("dst-shared@master") _
+rpmBuild (
+    specfile : "nexus.spec",
+    timeout : 5,
+    product : "csm",
+    target_node : "ncn",
+    fanout_params: ["sle15sp2"]
+)

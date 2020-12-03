@@ -1,0 +1,13 @@
+# Copyright 2020 Hewlett Packard Enterprise Development LP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "cray-nexus-setup.fullname" . }}
+  labels:
+{{ include "cray-nexus-setup.labels" . | indent 4 }}
+data:
+  blobstores.yaml: |-
+{{ include "cray-nexus-setup.blobStores" . | indent 4 }}
+  repositories.yaml: |-
+{{ include "cray-nexus-setup.repositories" . | indent 4 }}
