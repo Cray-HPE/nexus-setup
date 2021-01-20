@@ -10,4 +10,5 @@ dockerBuildPipeline {
  imagePrefix = "cray"
  product = "csm"
  githubPushRepo = "Cray-HPE/nexus-setup"
+ githubPushBranches = /(release\/.*|master)/
 }
