@@ -1,6 +1,16 @@
 #!/bin/bash
 
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2021 Hewlett Packard Enterprise Development LP
+
+# Using sonatype/nexus3:latest introduced an NPE issue with proxying to
+# helmrepo.dev.cray.com.
+NEXUS_IMAGE="@@sonatype-nexus3-image@@"
+NEXUS_IMAGE_PATH="@@sonatype-nexus3-path@@"
+
+BUSYBOX_IMAGE="@@busybox-image@@"
+BUSYBOX_IMAGE_PATH="@@busybox-path@@"
+
+command -v podman >/dev/null 2>&1 || { echo >&2 "${0##*/}: command not found: podman"; exit 1; }
 
 if [ $# -lt 2 ]; then
     echo >&2 "usage: nexus-init PIDFILE CIDFILE [CONTAINER [VOLUME]]"
@@ -12,21 +22,19 @@ NEXUS_CIDFILE="$2"
 NEXUS_CONTAINER_NAME="${3-nexus}"
 NEXUS_VOLUME_NAME="${4:-${NEXUS_CONTAINER_NAME}-data}"
 
-# Using sonatype/nexus3:latest introduced an NPE issue with proxying to
-# helmrepo.dev.cray.com.
-NEXUS_CONTAINER_IMAGE="sonatype/nexus3:3.25.0"
 NEXUS_VOLUME_MOUNT="/nexus-data:rw,exec"
-
-command -v podman >/dev/null 2>&1 || { echo >&2 "${0##*/}: command not found: podman"; exit 1; }
 
 set -x
 
 # Create Nexus volume if not already present
 if ! podman volume inspect "$NEXUS_VOLUME_NAME" ; then
-    podman pull busybox || exit
+    # Load busybox image if it doesn't already exist
+    if ! podman image inspect "$BUSYBOX_IMAGE" >/dev/null; then
+        podman load -i "$BUSYBOX_IMAGE_PATH" "$BUSYBOX_IMAGE" || exit
+    fi
     podman run --rm --network host \
         -v "${NEXUS_VOLUME_NAME}:${NEXUS_VOLUME_MOUNT}" \
-        busybox /bin/sh -c "
+        "$BUSYBOX_IMAGE" /bin/sh -c "
 mkdir -p /nexus-data/etc
 cat > /nexus-data/etc/nexus.properties << EOF
 nexus.onboarding.enabled=false
@@ -45,7 +53,10 @@ rm -f "$NEXUS_PIDFILE"
 # Create Nexus container
 if ! podman inspect "$NEXUS_CONTAINER_NAME" ; then
     rm -f "$NEXUS_CIDFILE" || exit
-    podman pull "$NEXUS_CONTAINER_IMAGE" || exit
+    # Load nexus image if it doesn't already exist
+    if ! podamn image inspect "$NEXUS_IMAGE" >/dev/null; then
+        podman load -i "$NEXUS_IMAGE_PATH" "$NEXUS_IMAGE" || exit
+    fi
     podman create \
         --conmon-pidfile "$NEXUS_PIDFILE" \
         --cidfile "$NEXUS_CIDFILE" \
@@ -54,6 +65,6 @@ if ! podman inspect "$NEXUS_CONTAINER_NAME" ; then
         --network host \
         --volume "${NEXUS_VOLUME_NAME}:${NEXUS_VOLUME_MOUNT}" \
         --name "$NEXUS_CONTAINER_NAME" \
-        "$NEXUS_CONTAINER_IMAGE" || exit
+        "$NEXUS_IMAGE" || exit
     podman inspect "$NEXUS_CONTAINER_NAME" || exit
 fi
