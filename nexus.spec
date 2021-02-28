@@ -3,7 +3,7 @@ Name: cray-nexus
 License: Cray Proprietary
 Summary: Daemon for running the repository suite manager (Nexus)
 BuildArch: x86_64
-Version: 0.9.0
+Version: 0.9.1
 Release: 2.%(echo ${BUILD_METADATA})
 Source: %{name}-%{version}-%{release}.tar.bz2
 Vendor: Cray Inc.

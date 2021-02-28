@@ -54,7 +54,7 @@ rm -f "$NEXUS_PIDFILE"
 if ! podman inspect "$NEXUS_CONTAINER_NAME" ; then
     rm -f "$NEXUS_CIDFILE" || exit
     # Load nexus image if it doesn't already exist
-    if ! podamn image inspect "$NEXUS_IMAGE" >/dev/null; then
+    if ! podman image inspect "$NEXUS_IMAGE" >/dev/null; then
         podman load -i "$NEXUS_IMAGE_PATH" "$NEXUS_IMAGE" || exit
     fi
     podman create \
