@@ -1,6 +1,6 @@
 # Copyright 2020 Hewlett Packard Enterprise Development LP
 
-FROM dtr.dev.cray.com/baseos/alpine:3.12
+FROM arti.dev.cray.com/baseos-docker-master-local/alpine:3.12
 
 RUN apk add --no-cache bash curl parallel
 
