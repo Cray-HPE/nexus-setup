@@ -17,15 +17,15 @@ Requires: podman-cni-config
 %define imagedir %{_sharedstatedir}/cray/container-images/%{name}
 
 %define sonatype_nexus3_tag   3.25.0
-%define sonatype_nexus3_image dtr.dev.cray.com/sonatype/nexus3:%{sonatype_nexus3_tag}
+%define sonatype_nexus3_image arti.dev.cray.com/third-party-docker-stable-local/sonatype/nexus3:%{sonatype_nexus3_tag}
 %define sonatype_nexus3_file  sonatype-nexus3-%{sonatype_nexus3_tag}.tar
 
 %define busybox_tag   1.31.1
-%define busybox_image dtr.dev.cray.com/baseos/busybox:%{busybox_tag}
+%define busybox_image arti.dev.cray.com/baseos-docker-master-local/busybox:%{busybox_tag}
 %define busybox_file  baseos-busybox-%{busybox_tag}.tar
 
 %define cray_nexus_setup_tag   0.5.2
-%define cray_nexus_setup_image dtr.dev.cray.com/cray/cray-nexus-setup:%{cray_nexus_setup_tag}
+%define cray_nexus_setup_image arti.dev.cray.com/csm-docker-stable-local/cray-nexus-setup:%{cray_nexus_setup_tag}
 %define cray_nexus_setup_file  cray-nexus-setup-%{cray_nexus_setup_tag}.tar
 
 %define skopeo_image quay.io/skopeo/stable
