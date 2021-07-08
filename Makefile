@@ -35,7 +35,14 @@ RPM_SOURCE_NAME ?= ${RPM_NAME}-${VERSION}
 RPM_BUILD_DIR ?= $(PWD)/dist/rpmbuild
 RPM_SOURCE_PATH := ${RPM_BUILD_DIR}/SOURCES/${RPM_SOURCE_NAME}.tar.bz2
 
+# HELM CHART
+CHART_NAME_1 = cray-nexus-setup
+CHART_NAME_2 = cray-nexus-sync
+CHART_PATH ?= kubernetes
+CHART_VERSION ?= local
+
 rpm: rpm_prepare rpm_package_source rpm_build_source rpm_build
+charts: chart1 chart2
 
 image:
 	docker build --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
@@ -53,3 +60,11 @@ rpm_build_source:
 
 rpm_build:
 	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --define "_topdir $(RPM_BUILD_DIR)"
+
+chart1:
+	helm dep up ${CHART_PATH}/${CHART_NAME_1}
+	helm package ${CHART_PATH}/${CHART_NAME_1} -d ${CHART_PATH}/.packaged --version ${CHART_VERSION}
+
+chart2:
+	helm dep up ${CHART_PATH}/${CHART_NAME_2}
+	helm package ${CHART_PATH}/${CHART_NAME_2} -d ${CHART_PATH}/.packaged --version ${CHART_VERSION}
