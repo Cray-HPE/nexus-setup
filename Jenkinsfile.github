@@ -17,7 +17,10 @@ pipeline {
         VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
         DOCKER_ARGS = getDockerBuildArgs(name: env.NAME, description: env.DESCRIPTION)
         BUILD_METADATA = getRpmRevision(isStable: env.IS_STABLE)
-        CHART_VERSION = getChartVersion(name: env.NAME, isStable: env.IS_STABLE)
+        CHART_NAME_1 = "cray-nexus-setup"
+        CHART_NAME_2 = "cray-nexus-sync"
+        CHART_VERSION_1 = getChartVersion(name: env.CHART_NAME_1, isStable: env.IS_STABLE)
+        CHART_VERSION_2 = getChartVersion(name: env.CHART_NAME_2, isStable: env.IS_STABLE)
     }
 
     stages {

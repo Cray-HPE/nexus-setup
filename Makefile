@@ -36,8 +36,6 @@ RPM_BUILD_DIR ?= $(PWD)/dist/rpmbuild
 RPM_SOURCE_PATH := ${RPM_BUILD_DIR}/SOURCES/${RPM_SOURCE_NAME}.tar.bz2
 
 # HELM CHART
-CHART_NAME_1 = cray-nexus-setup
-CHART_NAME_2 = cray-nexus-sync
 CHART_PATH ?= kubernetes
 CHART_VERSION ?= local
 
@@ -63,8 +61,8 @@ rpm_build:
 
 chart1:
 	helm dep up ${CHART_PATH}/${CHART_NAME_1}
-	helm package ${CHART_PATH}/${CHART_NAME_1} -d ${CHART_PATH}/.packaged --version ${CHART_VERSION}
+	helm package ${CHART_PATH}/${CHART_NAME_1} -d ${CHART_PATH}/.packaged --version ${CHART_VERSION_1}
 
 chart2:
 	helm dep up ${CHART_PATH}/${CHART_NAME_2}
-	helm package ${CHART_PATH}/${CHART_NAME_2} -d ${CHART_PATH}/.packaged --version ${CHART_VERSION}
+	helm package ${CHART_PATH}/${CHART_NAME_2} -d ${CHART_PATH}/.packaged --version ${CHART_VERSION_2}
