@@ -27,7 +27,7 @@ DOCKER_IMAGE ?= ${NAME}:${VERSION}
 
 # RPM
 SPEC_NAME ?= nexus
-RPM_NAME ?= nexus-setup
+RPM_NAME ?= cray-nexus
 SPEC_FILE ?= ${SPEC_NAME}.spec
 BUILD_METADATA ?= "1~development~$(shell git rev-parse --short HEAD)"
 RPM_SPEC_FILE ?= ${NAME}.spec
