@@ -11,7 +11,7 @@ pipeline {
     }
 
     environment {
-        NAME = "nexus-setup"
+        NAME = "cray-nexus-setup"
         DESCRIPTION = "Utilities to setup and configure Nexus."
         IS_STABLE = getBuildIsStable()
         VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)

@@ -21,7 +21,7 @@
 # (MIT License)
 
 # DOCKER
-NAME ?= nexus-setup
+NAME ?= cray-nexus-setup
 VERSION ?= $(shell cat .version)
 DOCKER_IMAGE ?= ${NAME}:${VERSION}
 
@@ -51,13 +51,13 @@ rpm_prepare:
 	cp $(SPEC_FILE) $(RPM_BUILD_DIR)/SPECS/
 
 rpm_package_source:
-	tar --transform 'flags=r;s,^,/$(RPM_SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(RPM_SOURCE_PATH) .
+	tar --transform 'flags=r;s,^,/${RPM_NAME}-${RPM_VERSION}/,' --exclude .git --exclude dist -cvjf $(RPM_SOURCE_PATH) .
 
 rpm_build_source:
 	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(RPM_SOURCE_PATH) --nodeps --define "_topdir $(RPM_BUILD_DIR)"
 
 rpm_build:
-	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --nodeps --define "_topdir $(RPM_BUILD_DIR)"
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --nodeps --define "_topdir $(RPM_BUILD_DIR)" --define "local_docker_image true" --define "cray_nexus_setup_image $(DOCKER_IMAGE)" --define "cray_nexus_setup_tag $(VERSION)"
 
 chart1:
 	helm dep up ${CHART_PATH}/${CHART_NAME_1}
