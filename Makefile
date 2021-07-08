@@ -54,10 +54,10 @@ rpm_package_source:
 	tar --transform 'flags=r;s,^,/$(RPM_SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(RPM_SOURCE_PATH) .
 
 rpm_build_source:
-	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(RPM_SOURCE_PATH) --define "_topdir $(RPM_BUILD_DIR)"
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(RPM_SOURCE_PATH) --nodeps --define "_topdir $(RPM_BUILD_DIR)"
 
 rpm_build:
-	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --define "_topdir $(RPM_BUILD_DIR)"
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --nodeps --define "_topdir $(RPM_BUILD_DIR)"
 
 chart1:
 	helm dep up ${CHART_PATH}/${CHART_NAME_1}
