@@ -35,7 +35,7 @@ RPM_SOURCE_NAME ?= ${RPM_NAME}-${VERSION}
 RPM_BUILD_DIR ?= $(PWD)/dist/rpmbuild
 RPM_SOURCE_PATH := ${RPM_BUILD_DIR}/SOURCES/${RPM_SOURCE_NAME}.tar.bz2
 
-rpm: rpm_package_source rpm_build_source rpm_build
+rpm: rpm_prepare rpm_package_source rpm_build_source rpm_build
 
 image:
 	docker build --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
