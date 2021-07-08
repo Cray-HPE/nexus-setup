@@ -31,7 +31,6 @@ RPM_NAME ?= cray-nexus
 SPEC_FILE ?= ${SPEC_NAME}.spec
 BUILD_METADATA ?= "1~development~$(shell git rev-parse --short HEAD)"
 RPM_VERSION ?= $(shell cat .version)
-RPM_SPEC_FILE ?= ${NAME}.spec
 RPM_SOURCE_NAME ?= ${RPM_NAME}-${RPM_VERSION}
 RPM_BUILD_DIR ?= $(PWD)/dist/rpmbuild
 RPM_SOURCE_PATH := ${RPM_BUILD_DIR}/SOURCES/${RPM_SOURCE_NAME}.tar.bz2
