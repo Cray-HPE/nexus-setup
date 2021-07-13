@@ -24,21 +24,25 @@ pipeline {
     }
 
     stages {
-        stage("Image") {
-            steps {
-                sh "make image"
-            }
-        }
+        stage("Build") {
+            parallel {
+                stage("Image") {
+                    steps {
+                        sh "make image"
+                    }
+                }
 
-        stage("RPM") {
-            steps {
-                sh "make rpm"
-            }
-        }
+                stage("RPM") {
+                    steps {
+                        sh "make rpm"
+                    }
+                }
 
-        stage("Charts") {
-            steps {
-                sh "make charts"
+                stage("Charts") {
+                    steps {
+                        sh "make charts"
+                    }
+                }
             }
         }
 
