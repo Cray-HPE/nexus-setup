@@ -37,7 +37,8 @@ RPM_SOURCE_PATH := ${RPM_BUILD_DIR}/SOURCES/${RPM_SOURCE_NAME}.tar.bz2
 
 # HELM CHART
 CHART_PATH ?= kubernetes
-CHART_VERSION ?= local
+CHART_VERSION_1 ?= local
+CHART_VERSION_2 ?= local
 
 rpm: rpm_prepare rpm_package_source rpm_build_source rpm_build
 charts: chart1 chart2

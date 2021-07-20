@@ -26,10 +26,10 @@ Requires: podman-cni-config
 
 
 %{!?local_docker_image:
-# Let CI define this when buildling image at the same time
+# Let CI define this when building image at the same time
 %define local_docker_image false
 %define cray_nexus_setup_tag   0.5.2
-%define cray_nexus_setup_image arti.dev.cray.com/csm-docker-stable-local/cray-nexus-setup:%{cray_nexus_setup_tag}
+%define cray_nexus_setup_image artifactory.algol60.net/csm-docker/cray-nexus-setup:%{cray_nexus_setup_tag}
 }
 
 %define cray_nexus_setup_file  cray-nexus-setup-%{cray_nexus_setup_tag}.tar

@@ -11,7 +11,8 @@ pipeline {
     }
 
     environment {
-        NAME = "cray-nexus-setup"
+        NAME = "nexus-setup"
+        IMAGE_NAME = "cray-nexus-setup"
         DESCRIPTION = "Utilities to setup and configure Nexus."
         IS_STABLE = getBuildIsStable()
         VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
@@ -49,7 +50,7 @@ pipeline {
         stage("Publish") {
             steps {
                 script {
-                    publishCsmDockerImage(image: env.NAME, tag: env.VERSION, isStable: env.IS_STABLE)
+                    publishCsmDockerImage(image: env.IMAGE_NAME, tag: env.VERSION, isStable: env.IS_STABLE)
                     publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", arch: "x86_64", isStable: env.IS_STABLE)
                     publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", arch: "src", isStable: env.IS_STABLE)
                     publishCsmHelmCharts(component: env.NAME, chartsPath: "${WORKSPACE}/kubernetes/.packaged", isStable: env.IS_STABLE)
