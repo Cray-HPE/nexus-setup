@@ -16,7 +16,7 @@ pipeline {
         DESCRIPTION = "Utilities to setup and configure Nexus."
         IS_STABLE = getBuildIsStable()
         VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
-        DOCKER_ARGS = getDockerBuildArgs(name: env.NAME, description: env.DESCRIPTION)
+        DOCKER_ARGS = getDockerBuildArgs(name: env.IMAGE_NAME, description: env.DESCRIPTION)
         BUILD_METADATA = getRpmRevision(isStable: env.IS_STABLE)
         CHART_NAME_1 = "cray-nexus-setup"
         CHART_NAME_2 = "cray-nexus-sync"

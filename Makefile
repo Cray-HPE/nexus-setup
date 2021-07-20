@@ -44,7 +44,8 @@ rpm: rpm_prepare rpm_package_source rpm_build_source rpm_build
 charts: chart1 chart2
 
 image:
-	docker build --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
+	docker build --pull ${DOCKER_ARGS} --tag '${IMAGE_NAME}:${VERSION}' .
+    docker images
 
 rpm_prepare:
 	rm -rf $(RPM_BUILD_DIR)
