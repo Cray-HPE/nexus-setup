@@ -21,9 +21,9 @@
 # (MIT License)
 
 # DOCKER
-NAME ?= cray-nexus-setup
+#NAME ?= cray-nexus-setup
 VERSION ?= $(shell cat .version)
-DOCKER_IMAGE ?= ${NAME}:${VERSION}
+DOCKER_IMAGE ?= ${IMAGE_NAME}:${VERSION}
 
 # RPM
 SPEC_NAME ?= nexus

@@ -11,7 +11,7 @@ pipeline {
     }
 
     environment {
-        NAME = "cray-nexus-setup"
+        NAME = "nexus-setup"
         IMAGE_NAME = "cray-nexus-setup"
         DESCRIPTION = "Utilities to setup and configure Nexus."
         IS_STABLE = getBuildIsStable()
