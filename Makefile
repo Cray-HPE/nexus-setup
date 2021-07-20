@@ -47,6 +47,7 @@ image:
 	docker build --pull ${DOCKER_ARGS} --tag '${IMAGE_NAME}:${VERSION}' .
 	docker images
 
+
 rpm_prepare:
 	rm -rf $(RPM_BUILD_DIR)
 	mkdir -p $(RPM_BUILD_DIR)/SPECS $(RPM_BUILD_DIR)/SOURCES
