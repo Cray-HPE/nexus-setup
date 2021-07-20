@@ -24,11 +24,9 @@ Requires: podman-cni-config
 %define busybox_image arti.dev.cray.com/baseos-docker-master-local/busybox:%{busybox_tag}
 %define busybox_file  baseos-busybox-%{busybox_tag}.tar
 
-
 %{!?local_docker_image:
 # Let CI define this when building image at the same time
-%define local_docker_image false
-%define cray_nexus_setup_tag   0.5.2
+%define cray_nexus_setup_tag 0.5.2
 %define cray_nexus_setup_image artifactory.algol60.net/csm-docker/unstable/cray-nexus-setup:%{cray_nexus_setup_tag}
 }
 
