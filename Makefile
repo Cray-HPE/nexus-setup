@@ -21,7 +21,7 @@
 # (MIT License)
 
 # DOCKER
-#NAME ?= cray-nexus-setup
+IMAGE_NAME ?= cray-nexus-setup
 VERSION ?= $(shell cat .version)
 DOCKER_IMAGE ?= ${IMAGE_NAME}:${VERSION}
 
