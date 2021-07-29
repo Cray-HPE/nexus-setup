@@ -30,6 +30,11 @@ pipeline {
                 stage("Image") {
                     steps {
                         sh "make image"
+                        snykSecurity(
+                            snykInstallation: 'snyk@latest',
+                            snykTokenId: 'snyk-token',
+                            additionalArguments: "--docker ${env.IMAGE_NAME}:${env.VERSION}"
+                        )
                     }
                 }
 
