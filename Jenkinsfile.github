@@ -1,4 +1,4 @@
-@Library('csm-shared-library') _
+@Library('csm-shared-library@snyk-scan-before-publish') _
 
 pipeline {
     agent {
@@ -30,11 +30,6 @@ pipeline {
                 stage("Image") {
                     steps {
                         sh "make image"
-                        snykSecurity(
-                            snykInstallation: 'snyk@latest',
-                            snykTokenId: 'snyk-token',
-                            additionalArguments: "--docker ${env.IMAGE_NAME}:${env.VERSION}"
-                        )
                     }
                 }
 
