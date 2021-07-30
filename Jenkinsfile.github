@@ -1,4 +1,4 @@
-@Library('csm-shared-library@snyk-scan-before-publish') _
+@Library('csm-shared-library') _
 
 pipeline {
     agent {
