@@ -4,7 +4,7 @@
 
 dockerBuildPipeline {
  app = "nexus-setup"
- name = "nexus-setup"
+ name = "cray-nexus-setup"
  description = "Utilities to setup and configure Nexus"
  repository = "cray"
  imagePrefix = "cray"

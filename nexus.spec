@@ -24,12 +24,21 @@ Requires: podman-cni-config
 %define busybox_image arti.dev.cray.com/baseos-docker-master-local/busybox:%{busybox_tag}
 %define busybox_file  baseos-busybox-%{busybox_tag}.tar
 
-%define cray_nexus_setup_tag   0.5.2
-%define cray_nexus_setup_image arti.dev.cray.com/csm-docker-stable-local/cray-nexus-setup:%{cray_nexus_setup_tag}
+%{!?local_docker_image:
+# Let CI define this when building image at the same time
+%define local_docker_image false
+%define cray_nexus_setup_tag 0.5.2
+%define cray_nexus_setup_image artifactory.algol60.net/csm-docker/unstable/cray-nexus-setup:%{cray_nexus_setup_tag}
+}
+
 %define cray_nexus_setup_file  cray-nexus-setup-%{cray_nexus_setup_tag}.tar
 
 %define skopeo_image quay.io/skopeo/stable
 %define skopeo_file  skopeo-stable.tar
+
+%{!?_unitdir:
+%define _unitdir /usr/lib/systemd/system
+}
 
 %description
 This RPM installs the daemon file for Nexus, launched through podman. This allows nexus to launch
@@ -49,8 +58,14 @@ sed -e 's,@@cray-nexus-setup-image@@,%{cray_nexus_setup_image},g' \
     -i systemd/nexus-setup.sh
 skopeo copy docker://%{sonatype_nexus3_image}  docker-archive:%{sonatype_nexus3_file}
 skopeo copy docker://%{busybox_image}          docker-archive:%{busybox_file}
-skopeo copy docker://%{cray_nexus_setup_image} docker-archive:%{cray_nexus_setup_file}
 skopeo copy docker://%{skopeo_image}           docker-archive:%{skopeo_file}
+
+%if "%{local_docker_image}" == "true"
+docker save %{cray_nexus_setup_image} -o %{cray_nexus_setup_file}
+%else
+skopeo copy docker://%{cray_nexus_setup_image} docker-archive:%{cray_nexus_setup_file}
+%endif
+
 
 %install
 install -D -m 0644 -t %{buildroot}%{_unitdir} systemd/nexus.service
