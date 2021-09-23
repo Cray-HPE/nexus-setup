@@ -4,12 +4,14 @@ License: Cray Proprietary
 Summary: Daemon for running the repository suite manager (Nexus)
 BuildArch: x86_64
 Version: 0.9.1
-Release: 2.%(echo ${BUILD_METADATA})
+Release: 3.%(echo ${BUILD_METADATA})
 Source: %{name}-%{version}-%{release}.tar.bz2
 Vendor: Cray Inc.
 BuildRequires: coreutils
+BuildRequires: docker
 BuildRequires: sed
 BuildRequires: skopeo
+BuildRequires: pkgconfig(systemd)
 Requires: podman
 Requires: podman-cni-config
 %{?systemd_ordering}
