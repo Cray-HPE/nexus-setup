@@ -1,6 +1,6 @@
 # Copyright 2021 Hewlett Packard Enterprise Development LP
 
-FROM artifactory.algol60.net/docker.io/alpine:latest
+FROM artifactory.algol60.net/docker.io/library/alpine
 
 RUN apk --update upgrade --no-cache && apk add --no-cache bash curl parallel
 
