@@ -18,10 +18,6 @@ pipeline {
         VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
         DOCKER_ARGS = getDockerBuildArgs(name: env.IMAGE_NAME, description: env.DESCRIPTION)
         BUILD_METADATA = getRpmRevision(isStable: env.IS_STABLE)
-        CHART_NAME_1 = "cray-nexus-setup"
-        CHART_NAME_2 = "cray-nexus-sync"
-        CHART_VERSION_1 = getChartVersion(name: env.CHART_NAME_1, isStable: env.IS_STABLE)
-        CHART_VERSION_2 = getChartVersion(name: env.CHART_NAME_2, isStable: env.IS_STABLE)
     }
 
     stages {
@@ -48,12 +44,6 @@ pipeline {
                         sh "make rpm"
                     }
                 }
-
-                stage("Charts") {
-                    steps {
-                        sh "make charts"
-                    }
-                }
             }
         }
 
@@ -64,7 +54,6 @@ pipeline {
                     publishCsmDockerImage(image: env.IMAGE_NAME, tag: env.VERSION, isStable: env.IS_STABLE)
                     publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", arch: "x86_64", isStable: env.IS_STABLE)
                     publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", arch: "src", isStable: env.IS_STABLE)
-                    publishCsmHelmCharts(component: env.NAME, chartsPath: "${WORKSPACE}/kubernetes/.packaged", isStable: env.IS_STABLE)
                 }
             }
         }

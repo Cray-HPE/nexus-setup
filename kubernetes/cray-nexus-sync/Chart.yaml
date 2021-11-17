@@ -1,6 +1,0 @@
-# Copyright 2020 Hewlett Packard Enterprise Development LP
-
-apiVersion: v1
-name: cray-nexus-sync
-version: 0.2.0
-description: Upload blob assets to Nexus repositories.
