@@ -12,56 +12,33 @@ pipeline {
 
     environment {
         NAME = "nexus-setup"
-        IMAGE_NAME = "cray-nexus-setup"
         DESCRIPTION = "Utilities to setup and configure Nexus."
         IS_STABLE = getBuildIsStable()
+        IMAGE_NAME = "cray-nexus-setup"
         VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
         DOCKER_ARGS = getDockerBuildArgs(name: env.IMAGE_NAME, description: env.DESCRIPTION)
-        BUILD_METADATA = getRpmRevision(isStable: env.IS_STABLE)
     }
 
     stages {
         stage("Build") {
-            parallel {
-                stage("Image") {
-                    steps {
-                        sh "make image"
-                    }
-                }
-
-                stage("RPM") {
-                    agent {
-                        docker {
-                            image 'artifactory.algol60.net/csm-docker/stable/sle15sp3_build_environment'
-                            reuseNode true
-                            registryUrl 'https://artifactory.algol60.net/'
-                            registryCredentialsId 'artifactory-algol60'
-                            // Run as root
-                            args "-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker --group-add 999"
-                        }
-                    }
-                    steps {
-                        sh "make rpm"
-                    }
-                }
+            steps {
+                sh "make image"
             }
         }
 
         stage("Publish") {
             steps {
                 script {
-          			postChownFiles()
+                    postChownFiles()
                     publishCsmDockerImage(image: env.IMAGE_NAME, tag: env.VERSION, isStable: env.IS_STABLE)
-                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", arch: "x86_64", isStable: env.IS_STABLE)
-                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", arch: "src", isStable: env.IS_STABLE)
                 }
             }
         }
     }
     post {
-		always {
-			// Own files so jenkins can clean them up later
-			postChownFiles()
-		}
+	    always {
+	        // Own files so jenkins can clean them up later
+	        postChownFiles()
+	    }
 	  }
 }
