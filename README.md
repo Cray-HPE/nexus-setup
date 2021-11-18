@@ -62,66 +62,7 @@ Enable Rut Auth...{
   "result" : "null"
 }200 OK
 ++ dirname ./hack/nexus-init
-+ ./hack/config/generate.sh
-+ yq r ./hack/config/../../kubernetes/cray-nexus-setup/online-overrides.yaml 'charts[1].values'
-+ helm template ./hack/config/../../kubernetes/cray-nexus-setup --name cray-nexus-setup --namespace nexus -f /var/folders/8n/f3m713z530s55v0972gcs_n4006fd2/T/tmp.xyoEBq0h/values.yaml
-+ yq r -d '*' /var/folders/8n/f3m713z530s55v0972gcs_n4006fd2/T/tmp.xyoEBq0h/chart.yaml 'data."blobstores.yaml"'
-+ yq r -d '*' /var/folders/8n/f3m713z530s55v0972gcs_n4006fd2/T/tmp.xyoEBq0h/chart.yaml 'data."repositories.yaml"'
 + rm -rf /var/folders/8n/f3m713z530s55v0972gcs_n4006fd2/T/tmp.xyoEBq0h
-++ dirname ./hack/nexus-init
-+ nexus-blobstores-create ./hack/config/blobstores.yaml
-Creating file blobstore: local... 204 OK
-Creating file blobstore: shasta-1.3... 204 OK
-Creating file blobstore: latest... 204 OK
-Creating file blobstore: dvds... 204 OK
-++ dirname ./hack/nexus-init
-+ nexus-repositories-create ./hack/config/repositories.yaml
-Creating helm/hosted repository: default-charts...201 OK
-Creating docker/hosted repository: default-registry...201 OK
-Creating yum/hosted repository: default-rpms...201 OK
-Creating docker/proxy repository: dtr.dev.cray.com...201 OK
-Creating helm/proxy repository: helmrepo.dev.cray.com...201 OK
-Creating raw/proxy repository: dvd-SLE-15-SP1-Installer-DVD-x86_64-GM-DVD1...201 OK
-Creating raw/proxy repository: dvd-SLE-15-SP1-Installer-DVD-x86_64-QU2-DVD1...201 OK
-Creating raw/proxy repository: dvd-SLE-15-SP1-Installer-DVD-x86_64-QU2-DVD2...201 OK
-Creating raw/proxy repository: dvd-SLE-15-SP1-Packages-x86_64-GM-DVD1...201 OK
-Creating raw/proxy repository: dvd-SLE-15-SP1-Packages-x86_64-QU2-DVD1...201 OK
-Creating raw/proxy repository: dvd-SLE-15-SP1-Packages-x86_64-QU2-DVD2...201 OK
-Creating yum/proxy repository: badger-1.3...201 OK
-Creating raw/proxy repository: cos-images-1.3-sle-15sp1-compute...201 OK
-Creating yum/proxy repository: cos-1.3-sle-15sp1-compute...201 OK
-Creating yum/proxy repository: cos-1.3-sle-15sp1-management...201 OK
-Creating yum/proxy repository: ct-tests-1.3-sle-15sp1-management...201 OK
-Creating yum/proxy repository: mirror-1.3-opensuse-leap-15...201 OK
-Creating yum/proxy repository: mirror-1.3-sle-15sp1-all-products...201 OK
-Creating yum/proxy repository: mirror-1.3-sle-15sp1-all-updates...201 OK
-Creating yum/proxy repository: pe-crayctldeploy-1.3-sle-15sp1-management...201 OK
-Creating yum/proxy repository: shasta-firmware-1.3...201 OK
-Creating yum/proxy repository: sma-crayctldeploy-1.3-sle-15sp1-management...201 OK
-Creating yum/proxy repository: sma-1.3-sle-15sp1-compute...201 OK
-Creating yum/proxy repository: sma-1.3-sle-15sp1-management...201 OK
-Creating yum/proxy repository: sms-crayctldeploy-1.3-sle-15sp1-management...201 OK
-Creating yum/proxy repository: thirdparty-1.3-sle-15sp1-compute...201 OK
-Creating yum/proxy repository: thirdparty-1.3-sle-15sp1-management...201 OK
-Creating yum/proxy repository: badger...201 OK
-Creating raw/proxy repository: cos-images-sle-15sp1-compute...201 OK
-Creating yum/proxy repository: cos-sle-15sp1-compute...201 OK
-Creating yum/proxy repository: cos-sle-15sp1-management...201 OK
-Creating yum/proxy repository: ct-tests-sle-15sp1-management...201 OK
-Creating yum/proxy repository: mirror-opensuse-leap-15...201 OK
-Creating yum/proxy repository: mirror-sle-15sp1-all-products...201 OK
-Creating yum/proxy repository: mirror-sle-15sp1-all-updates...201 OK
-Creating yum/proxy repository: pe-crayctldeploy-sle-15sp1-management...201 OK
-Creating yum/proxy repository: shasta-firmware...201 OK
-Creating yum/proxy repository: sma-crayctldeploy-sle-15sp1-management...201 OK
-Creating yum/proxy repository: sma-sle-15sp1-compute...201 OK
-Creating yum/proxy repository: sma-sle-15sp1-management...201 OK
-Creating yum/proxy repository: sms-crayctldeploy-sle-15sp1-management...201 OK
-Creating yum/proxy repository: thirdparty-sle-15sp1-compute...201 OK
-Creating yum/proxy repository: thirdparty-sle-15sp1-management...201 OK
-Creating docker/group repository: registry.local...201 OK
-Creating yum/group repository: sms-1.3-sle-15sp1-management...201 OK
-Creating yum/group repository: sms-sle-15sp1-management...201 OK
 ```
 
 Open http://localhost:8081 and sign in with username `admin` and password
