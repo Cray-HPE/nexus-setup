@@ -4,6 +4,19 @@
 
 . "$(dirname "$0")/nexus-ready"
 
+function upload_script() {
+    curl -sfk -w "%{http_code}" -X "${1:-"POST"}" \
+        "${URL}/v1/script" \
+        -H 'Content-Type: application/json' \
+        -d @- << EOF
+{
+"name": $(echo -n "$name" | jq -Rs .),
+"type": "groovy",
+"content": $(jq -Rs . "$path")
+}
+EOF
+}
+
 while [[ $# -gt 0 ]]; do
     path="$1"
     shift
@@ -16,18 +29,33 @@ while [[ $# -gt 0 ]]; do
     name="${path##*/}"
     name="${name%.groovy}"
 
-    echo -n >&2 "uploading script: ${name}..."
+    echo -n >&2 "Upload script: ${name}..."
 
-    curl -sfk -w "%{http_code}" -X POST \
-        "${URL}/v1/script" \
-        -H 'Content-Type: application/json' \
-        -d @- << EOF
+    if curl -sfk -w "%{http_code}" -X GET "${URL}/v1/script/${name}" >/dev/null; then
+        # Script already exists
+        echo -n >&2 " (exists) "
+        curl -sfk -w "%{http_code}" -X PUT \
+            "${URL}/v1/script/${name}" \
+            -H 'Content-Type: application/json' \
+            -d @- << EOF
 {
 "name": $(echo -n "$name" | jq -Rs .),
 "type": "groovy",
 "content": $(jq -Rs . "$path")
 }
 EOF
+    else
+        curl -sfk -w "%{http_code}" -X POST \
+            "${URL}/v1/script" \
+            -H 'Content-Type: application/json' \
+            -d @- << EOF
+{
+"name": $(echo -n "$name" | jq -Rs .),
+"type": "groovy",
+"content": $(jq -Rs . "$path")
+}
+EOF
+    fi
     status=$?
 
     if [[ $status -eq 0 ]]; then echo >&2 " OK"; else echo >&2 " FAIL"; exit $status; fi

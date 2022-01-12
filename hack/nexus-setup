@@ -14,5 +14,7 @@ done
 set -e
 
 nexus-upload-script $(dirname "$0")/../groovy/*.groovy >&2
-nexus-remove-default-repos >&2
-echo "adminpwd" | nexus-change-password admin >&2
+nexus-enable-keycloak-realm >&2
+nexus-enable-docker-realm >&2
+nexus-enable-rut-auth >&2
+nexus-enable-anonymous-access >&2

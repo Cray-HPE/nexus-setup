@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Copyright 2022 Hewlett Packard Enterprise Development LP
+
+. "$(dirname "$0")/nexus-ready"
+
+# requires the setup_capability script
+
+echo -n >&2 "Disable Rut Auth capability..."
+
+curl -sfk -w "%{http_code}" -X POST \
+    "${URL}/v1/script/setup_capability/run" \
+    -H "Content-Type: application/json" \
+    -d '{"capability_typeId": "rutauth", "capability_enabled": false, "capability_properties": {"httpHeader": "X-WEBAUTH-USER"}}'
+status=$?
+
+if [[ $status -eq 0 ]]; then echo >&2 " OK"; else echo >&2 " FAIL"; exit $status; fi
+
+# Disabling the capability does not remove the corresponding security realm
+
+echo -n >&2 "Disable Rut Auth security realm..."
+
+curl -sfk "${URL}/beta/security/realms/active" \
+    | jq 'del(.[] | select(. == "rutauth-realm"))' \
+    | curl -sfk -w "%{http_code}" -X PUT \
+        "${URL}/beta/security/realms/active" \
+        -H 'Content-Type: application/json' \
+        -d @-
+status=$?
+
+if [[ $status -eq 0 ]]; then echo >&2 " OK"; else echo >&2 " FAIL"; exit $status; fi

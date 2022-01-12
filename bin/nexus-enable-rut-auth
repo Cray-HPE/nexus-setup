@@ -6,7 +6,7 @@
 
 # requires the setup_capability script
 
-echo -n >&2 "Enable Rut Auth..."
+echo -n >&2 "Enable Rut Auth capability..."
 
 curl -sfk -w "%{http_code}" -X POST \
     "${URL}/v1/script/setup_capability/run" \
@@ -15,3 +15,6 @@ curl -sfk -w "%{http_code}" -X POST \
 status=$?
 
 if [[ $status -eq 0 ]]; then echo >&2 " OK"; else echo >&2 " FAIL"; exit $status; fi
+
+# Enabling the Rut Auth capability implicitly enables the Rut Auth realm
+echo -n >&2 "Enable Rut Auth security realm...OK (implicit)"

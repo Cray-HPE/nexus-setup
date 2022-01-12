@@ -6,16 +6,18 @@ command -v jq >/dev/null 2>&1 || { echo >&2 "command not found: jq"; exit 1; }
 
 . "$(dirname "$0")/nexus-ready"
 
-echo -n >&2 "Enable Docker security realm..."
+echo -n >&2 "Enabling Keycloak Authenticating security realm..."
 
 # Check if it is already enabled
-if [[ 0 -ne $(curl -sfk "${URL}/beta/security/realms/active" | jq -r '[.[] | select(. == "DockerToken")] | length') ]]; then
+if [[ 0 -ne $(curl -sfk "${URL}/beta/security/realms/active" | jq -r '[.[] | select(. == "org.github.flytreeleft.nexus3.keycloak.plugin.KeycloakAuthenticatingRealm")] | length') ]]; then
     echo >&2 "OK (exists)"
     exit
 fi
 
+# Insert the Keycloak plugin as the first item in the existing ordered list so that
+# authentication will fall back to other realms.
 curl -sfk "${URL}/beta/security/realms/active" \
-    | jq '. += ["DockerToken"]' \
+    | jq '. |= ["org.github.flytreeleft.nexus3.keycloak.plugin.KeycloakAuthenticatingRealm"] + .' \
     | curl -sfk -w "%{http_code}" -X PUT \
         "${URL}/beta/security/realms/active" \
         -H 'Content-Type: application/json' \
