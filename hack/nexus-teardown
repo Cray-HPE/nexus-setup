@@ -1,28 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2022 Hewlett Packard Enterprise Development LP
 
 export PATH="$PATH:$(dirname "$0")/../bin"
 
 set -x
-
-export CURL_HOME="$(mktemp -d)"
-trap "rm -fr '$CURL_HOME'" EXIT
-
-# Add default Nexus admin credentials to netrc file
-NEXUS_HOST=$(sed -E -e 's_.*://([^/@]*@)?([^/:]+).*_\2_' <<< "$NEXUS_URL")
-cat > "${CURL_HOME}/.netrc" << EOF
-machine ${NEXUS_HOST} login ${NEXUS_SETUP_USERNAME:-admin} password ${NEXUS_SETUP_PASSWORD:-admin123}
-EOF
-chmod u=r,go= "${CURL_HOME}/.netrc"
-
-# Configure curl to use netrc
-cat > "${CURL_HOME}/.curlrc" << EOF
---netrc-file ${CURL_HOME}/.netrc
-EOF
-
-cat >&2 "${CURL_HOME}/.curlrc"
-cat >&2 "${CURL_HOME}/.netrc"
 
 while ! nexus-ready; do
   echo >&2 "trying again in 10 seconds"
