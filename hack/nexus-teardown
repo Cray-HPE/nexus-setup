@@ -6,6 +6,13 @@ export PATH="$PATH:$(dirname "$0")/../bin"
 
 set -x
 
+# Configure curl authentication
+export CURL_HOME="$(mktemp -d)"
+trap "rm -fr '$CURL_HOME'" EXIT
+
+export NEXUS_PASSWORD=adminpwd
+nexus-curl-auth "$CURL_HOME"
+
 while ! nexus-ready; do
   echo >&2 "trying again in 10 seconds"
   sleep 10
