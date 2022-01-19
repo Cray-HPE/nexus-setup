@@ -3,15 +3,10 @@
 # Copyright 2022 Hewlett Packard Enterprise Development LP
 
 export PATH="$PATH:$(dirname "$0")/../bin"
+export NEXUS_USERNAME=admin
+export NEXUS_PASSWORD=adminpwd
 
 set -x
-
-# Configure curl authentication
-export CURL_HOME="$(mktemp -d)"
-trap "rm -fr '$CURL_HOME'" EXIT
-
-export NEXUS_PASSWORD=adminpwd
-nexus-curl-auth "$CURL_HOME"
 
 while ! nexus-ready; do
   echo >&2 "trying again in 10 seconds"
@@ -19,6 +14,8 @@ while ! nexus-ready; do
 done
 
 set -e
+
+. "$(command -v nexus-ready)"
 
 nexus-disable-keycloak-realm >&2
 nexus-disable-docker-realm >&2

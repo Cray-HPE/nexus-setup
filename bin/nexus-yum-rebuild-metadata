@@ -17,7 +17,7 @@ get-task-id() {
     if [[ $status -eq 0 ]]; then echo >&2 " OK"; else echo >&2 " FAIL"; exit $status; fi
 }
 
-. "$(dirname "$0")/nexus-ready"
+. "$(command -v nexus-ready)"
 
 [[ $# -eq 1 ]] || { echo >&2 "usage: ${0##*/} REPOSITORY"; exit 1; }
 repo="$1"

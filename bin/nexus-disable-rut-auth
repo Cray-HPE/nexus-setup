@@ -2,7 +2,7 @@
 
 # Copyright 2022 Hewlett Packard Enterprise Development LP
 
-. "$(dirname "$0")/nexus-ready"
+. "$(command -v nexus-ready)"
 
 # requires the setup_capability script
 

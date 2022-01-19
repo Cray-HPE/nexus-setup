@@ -13,12 +13,13 @@ if ! curl -sfk "${URL}/v1/status/writable" >/dev/null 2>&1; then
 fi
 
 # Only setup auth if sourced
-(return 0 2>/dev/null) || exit
+(return 0 2>/dev/null) || exit 0
 
 # Only setup auth if CURL_HOME not already set
 if [[ ! -v CURL_HOME || -z "$CURL_HOME" ]]; then
-    export CURL_HOME="$(mktemp -d)"
-    trap "rm -fr '$CURL_HOME'" EXIT
+    curl_home="$(mktemp -d)"
+    trap "rm -fr '$curl_home'" EXIT
 
-    "$(dirname "$0")/nexus-curl-auth" "$CURL_HOME"
+    nexus-curl-auth "$curl_home"
+    export CURL_HOME="$curl_home"
 fi

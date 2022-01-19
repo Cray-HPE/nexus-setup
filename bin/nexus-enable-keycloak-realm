@@ -4,7 +4,7 @@
 
 command -v jq >/dev/null 2>&1 || { echo >&2 "command not found: jq"; exit 1; }
 
-. "$(dirname "$0")/nexus-ready"
+. "$(command -v nexus-ready)"
 
 echo -n >&2 "Enabling Keycloak Authenticating security realm..."
 

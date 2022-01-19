@@ -4,7 +4,7 @@
 
 command -v yq >/dev/null 2>&1 || { echo >&2 "command not found: yq"; exit 1; }
 
-. "$(dirname "$0")/nexus-ready"
+. "$(command -v nexus-ready)"
 
 WORKDIR="$(mktemp -d)"
 trap "{ rm -rf '$WORKDIR'; }" EXIT
