@@ -4,19 +4,21 @@
 
 command -v curl >/dev/null 2>&1 || { echo >&2 "command not found: curl"; exit 1; }
 
-: "${NEXUS_URL:="http://localhost:8081"}"
-
-if [[ ! -v CURL_HOME || -z "$CURL_HOME" ]]; then
-    export CURL_HOME="$(mktemp -d)"
-    trap "rm -fr '$CURL_HOME'" EXIT
-
-    "$(dirname "$0")/nexus-curl-auth" "$CURL_HOME"
-fi
-
-URL="${NEXUS_URL}/service/rest"
+URL="${NEXUS_URL:="http://localhost:8081"}/service/rest"
 
 # Verify Nexus is up
 if ! curl -sfk "${URL}/v1/status/writable" >/dev/null 2>&1; then
     echo >&2 "error: not ready: $NEXUS_URL"
     exit 1
+fi
+
+# Only setup auth if sourced
+(return 0 2>/dev/null) || exit
+
+# Only setup auth if CURL_HOME not already set
+if [[ ! -v CURL_HOME || -z "$CURL_HOME" ]]; then
+    export CURL_HOME="$(mktemp -d)"
+    trap "rm -fr '$CURL_HOME'" EXIT
+
+    "$(dirname "$0")/nexus-curl-auth" "$CURL_HOME"
 fi
