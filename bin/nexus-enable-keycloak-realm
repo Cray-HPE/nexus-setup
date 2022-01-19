@@ -17,7 +17,7 @@ fi
 # Insert the Keycloak plugin as the first item in the existing ordered list so that
 # authentication will fall back to other realms.
 curl -sfk "${URL}/beta/security/realms/active" \
-    | jq '. |= ["org.github.flytreeleft.nexus3.keycloak.plugin.KeycloakAuthenticatingRealm"] + .' \
+    | jq '. += ["org.github.flytreeleft.nexus3.keycloak.plugin.KeycloakAuthenticatingRealm"]' \
     | curl -sfk -w "%{http_code}" -X PUT \
         "${URL}/beta/security/realms/active" \
         -H 'Content-Type: application/json' \
