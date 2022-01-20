@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Copyright 2022 Hewlett Packard Enterprise Development LP
+
+
+if [[ $# -ne 1 ]]; then
+    echo >&2 "usage: ${0##*/} DIR"
+    exit 1
+fi
+
+curl_home="$1"
+
+if [[ ! -d "$curl_home" ]]; then
+    echo >&2 "error: No such directory: $curl_home"
+    exit 1
+fi
+
+# Limit credentials to Nexus host if NEXUS_URL is set
+if [[ -v NEXUS_URL && -n "$NEXUS_URL" ]]; then
+    machine="machine $(sed -E -e 's_.*://([^/@]*@)?([^/:]+).*_\2_' <<< "$NEXUS_URL")"
+else
+    machine="default"
+fi
+
+# Add default Nexus admin credentials to netrc file
+echo "${machine} login ${NEXUS_USERNAME:-admin} password ${NEXUS_PASSWORD:-admin123}" > "${curl_home}/.netrc"
+chmod u=r,go= "${curl_home}/.netrc"
+
+# Configure curl to use netrc
+echo "--netrc-file ${curl_home}/.netrc" > "${curl_home}/.curlrc"

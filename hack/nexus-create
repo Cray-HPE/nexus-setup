@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2022 Hewlett Packard Enterprise Development LP
 
 command -v docker >/dev/null 2>&1 || { echo >&2 "command not found: docker"; exit 1; }
 
@@ -12,7 +12,7 @@ case "$1" in
 esac
 
 NEXUS_CONTAINER_NAME="${1-"nexus"}"
-NEXUS_CONTAINER_IMAGE="${2:-"sonatype/nexus3:3.25.0"}"
+NEXUS_CONTAINER_IMAGE="${2:-"artifactory.algol60.net/csm-docker/stable/nexus3:3.25.0-2"}"
 NEXUS_VOLUME_NAME="${NEXUS_CONTAINER_NAME}-data"
 NEXUS_VOLUME_MOUNT="/nexus-data:rw"
 

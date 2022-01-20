@@ -6,16 +6,10 @@ command -v jq >/dev/null 2>&1 || { echo >&2 "command not found: jq"; exit 1; }
 
 . "$(command -v nexus-ready)"
 
-echo -n >&2 "Enable Docker security realm..."
-
-# Check if it is already enabled
-if [[ 0 -ne $(curl -sfk "${URL}/beta/security/realms/active" | jq -r '[.[] | select(. == "DockerToken")] | length') ]]; then
-    echo >&2 "OK (exists)"
-    exit
-fi
+echo -n >&2 "Disable Keycloak Authenticating security realm..."
 
 curl -sfk "${URL}/beta/security/realms/active" \
-    | jq '. += ["DockerToken"]' \
+    | jq 'del(.[] | select(. == "org.github.flytreeleft.nexus3.keycloak.plugin.KeycloakAuthenticatingRealm"))' \
     | curl -sfk -w "%{http_code}" -X PUT \
         "${URL}/beta/security/realms/active" \
         -H 'Content-Type: application/json' \

@@ -17,4 +17,8 @@ set -e
 
 . "$(command -v nexus-ready)"
 
-nexus-remove-default-repos >&2
+nexus-upload-script $(dirname "$0")/../groovy/*.groovy >&2
+nexus-enable-keycloak-realm >&2
+nexus-enable-docker-realm >&2
+nexus-enable-rut-auth >&2
+nexus-enable-anonymous-access >&2

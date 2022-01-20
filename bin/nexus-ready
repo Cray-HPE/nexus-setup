@@ -1,13 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2022 Hewlett Packard Enterprise Development LP
 
 command -v curl >/dev/null 2>&1 || { echo >&2 "command not found: curl"; exit 1; }
 
-URL="${NEXUS_URL:="http://admin:admin123@localhost:8081"}/service/rest"
+URL="${NEXUS_URL:="http://localhost:8081"}/service/rest"
 
 # Verify Nexus is up
 if ! curl -sfk "${URL}/v1/status/writable" >/dev/null 2>&1; then
     echo >&2 "error: not ready: $NEXUS_URL"
     exit 1
+fi
+
+# Only setup auth if sourced
+(return 0 2>/dev/null) || exit 0
+
+# Only setup auth if CURL_HOME not already set
+if [[ ! -v CURL_HOME || -z "$CURL_HOME" ]]; then
+    curl_home="$(mktemp -d)"
+    trap "rm -fr '$curl_home'" EXIT
+
+    nexus-curl-auth "$curl_home"
+    export CURL_HOME="$curl_home"
 fi

@@ -6,12 +6,12 @@
 
 # Requires the setup_anonymous_access script
 
-echo -n >&2 "Enable annonymous access..."
+echo -n >&2 "Disable annonymous access..."
 
 curl -sfk -w "%{http_code}" -X POST \
     "${URL}/v1/script/setup_anonymous_access/run" \
     -H 'Content-Type: application/json' \
-    -d '{"anonymous_access": true}'
+    -d '{"anonymous_access": false}'
 status=$?
 
 if [[ $status -eq 0 ]]; then echo >&2 " OK"; else echo >&2 " FAIL"; exit $status; fi

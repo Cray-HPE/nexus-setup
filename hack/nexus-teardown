@@ -17,4 +17,7 @@ set -e
 
 . "$(command -v nexus-ready)"
 
-nexus-remove-default-repos >&2
+nexus-disable-keycloak-realm >&2
+nexus-disable-docker-realm >&2
+nexus-disable-rut-auth >&2
+nexus-disable-anonymous-access >&2

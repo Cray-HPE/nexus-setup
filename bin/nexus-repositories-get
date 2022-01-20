@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2022 Hewlett Packard Enterprise Development LP
 
 command -v yq >/dev/null 2>&1 || { echo >&2 "command not found: yq"; exit 1; }
 
-. "$(dirname "$0")/nexus-ready"
+. "$(command -v nexus-ready)"
 
 # Temporary file for output from Nexus API
 repos="$(mktemp)"

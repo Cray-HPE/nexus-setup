@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2022 Hewlett Packard Enterprise Development LP
 
 if [[ $# -ne 2 ]]; then
     echo >&2 "usage: ${0##*/} SRC-DIRECTORY DEST-REPOSITORY"
@@ -18,7 +18,7 @@ fi
 
 command -v parallel >/dev/null 2>&1 || { echo >&2 "command not found: parallel"; exit 1; }
 
-. "$(dirname "$0")/nexus-ready"
+. "$(command -v nexus-ready)"
 
 upload-asset-yum() {
     file="$1"

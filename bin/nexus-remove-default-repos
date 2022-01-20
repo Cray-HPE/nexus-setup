@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Copyright 2020 Hewlett Packard Enterprise Development LP
+# Copyright 2022 Hewlett Packard Enterprise Development LP
 
 command -v jq >/dev/null 2>&1 || { echo >&2 "command not found: jq"; exit 1; }
 
-. "$(dirname "$0")/nexus-ready"
+. "$(command -v nexus-ready)"
 
 curl -sfk "${URL}/beta/repositories" \
     | jq -r '.[] | select(.format=="maven2" or .format=="nuget") | .name' \
