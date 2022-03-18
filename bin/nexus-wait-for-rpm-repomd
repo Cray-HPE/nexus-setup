@@ -16,7 +16,7 @@ echo >&2 "Waiting for Nexus to create repository metadata for ${reponame}..."
 
 # Note the use of NEXUS_URL as opposed to URL since this NOT using a REST API
 # endpoint.
-while ! curl -Isf "${NEXUS_URL}/repository/${reponame}/repodata/repomd.xml" ; do
+while ! curl -Isfk "${NEXUS_URL}/repository/${reponame}/repodata/repomd.xml" ; do
     echo >&2 "${reponame} repo metadata is not ready yet..."
     sleep "$interval"
 done
