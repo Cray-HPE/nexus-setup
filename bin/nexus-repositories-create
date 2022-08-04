@@ -13,19 +13,19 @@ function find_repo(){
     # If changes are needed, ensure that testing is done on both Nexus 3.25.0 (csm-1.2) and
     # 3.38.0 (csm-1.3) since this is used in both versions.
     if [[ $# -ne 3 ]]; then
-        echo -n >&2 "Missing argumentss. Expecting repo_format repo_type repo_name. Args passed were: $@"
+        echo -n >&2 "Missing arguments. Expecting repo_format repo_type repo_name. Arguments passed were: $@"
         return 1
     fi
-    if [[ -z "$1" ]]; then echo -n >&2 "Empty repo_format arg."; return 1; fi
-    if [[ -z "$2" ]]; then echo -n >&2 "Empty repo_type arg."; return 1; fi
-    if [[ -z "$3" ]]; then echo -n >&2 "Empty repo_name arg."; return 1; fi
+    if [[ -z "$1" ]]; then echo -n >&2 "Empty repo_format argument."; return 1; fi
+    if [[ -z "$2" ]]; then echo -n >&2 "Empty repo_type argument."; return 1; fi
+    if [[ -z "$3" ]]; then echo -n >&2 "Empty repo_name argument."; return 1; fi
     repo_format=$1
     repo_type=$2
     repo_name=$3
 
     echo -n >&2 "Looking for ${repo_format}/${repo_type} repository: ${repo_name}..."
 
-    # Ask Nexus for all repositories and filter that result by by format, type, and name.
+    # Ask Nexus for all repositories and filter that result by format, type, and name.
     jqfilter=".[] | select(.format == \"$repo_format\") | select(.type == \"$repo_type\") | select(.name == \"$repo_name\")"
     result=$(curl -sfk "${URL}/v1/repositories" | jq "$jqfilter")
 
@@ -55,7 +55,7 @@ while [[ $# -gt 0 ]]; do
 
         if [[ $found -eq 1 ]]; then
             # Repo was not found, try to create it.
-            # Don't call ceate on an existing repo (CASMINST-5136).
+            # Don't call create on an existing repo (CASMINST-5136).
             echo -n >&2 "Creating ${repo_format}/${repo_type} repository: ${repo_name}..."
             yq r -j "$tmpfile" | curl -sfk -w "%{http_code}" \
                 --retry-connrefused \
