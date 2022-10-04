@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Copyright 2022 Hewlett Packard Enterprise Development LP
+
+SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
+# The directory is expected to contain nexus-blobstores.yaml and nexus-repositories.yaml.q
+if [[ $# -eq 0 ]]; then
+    echo "usage $0: <nexus_setup_directory>"
+    echo "The nexus setup directory must contain nexus-blobstores.yaml and/or nexus-repositories.yaml"
+    exit 1
+fi
+while [[ $# -gt 0 ]]; do
+    echo "$0 looking for nexus-blobstores.yaml and/or nexus-repositories.yaml in $1"
+    if [[ -f $1/nexus-blobstores.yaml ]]; then
+        echo "Found $1/nexus-blobstores.yaml"
+        # This script will exit on error.
+        $SCRIPT_DIR/nexus-blobstores-create $1/nexus-blobstores.yaml
+    fi
+    if [[ -f $1/nexus-repositories.yaml ]]; then
+        echo "Found $1/nexus-repositories.yaml"
+        # This script will exit on error.
+        $SCRIPT_DIR/nexus-repositories-create $1/nexus-repositories.yaml
+    fi
+    shift
+done
