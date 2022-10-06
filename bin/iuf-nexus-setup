@@ -3,23 +3,65 @@
 # Copyright 2022 Hewlett Packard Enterprise Development LP
 
 SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
-# The directory is expected to contain nexus-blobstores.yaml and nexus-repositories.yaml.q
+
+usage()
+{
+    echo "Usage: $0 requires one or more arguments:"
+    echo "       [ -b | --blobstores full-path-to-nexus-blobstores.yaml ] [ -r | --repositories full-path-to-nexus-repositories.yaml ]"
+    exit 1
+}
+
 if [[ $# -eq 0 ]]; then
-    echo "usage $0: <nexus_setup_directory>"
-    echo "The nexus setup directory must contain nexus-blobstores.yaml and/or nexus-repositories.yaml"
+    usage
     exit 1
 fi
-while [[ $# -gt 0 ]]; do
-    echo "$0 looking for nexus-blobstores.yaml and/or nexus-repositories.yaml in $1"
-    if [[ -f $1/nexus-blobstores.yaml ]]; then
-        echo "Found $1/nexus-blobstores.yaml"
-        # This script will exit on error.
-        $SCRIPT_DIR/nexus-blobstores-create $1/nexus-blobstores.yaml
-    fi
-    if [[ -f $1/nexus-repositories.yaml ]]; then
-        echo "Found $1/nexus-repositories.yaml"
-        # This script will exit on error.
-        $SCRIPT_DIR/nexus-repositories-create $1/nexus-repositories.yaml
-    fi
-    shift
+
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o b:r: --long blobstores:,repositories: -- "$@")
+VALID_ARGUMENTS=$?
+if [ "$VALID_ARGUMENTS" != "0" ]; then
+    usage
+fi
+
+eval set -- "$PARSED_ARGUMENTS"
+while :
+do
+    case "$1" in
+        -b | --blobstores) BLOBSTORES="$2"; shift 2;;
+        -r | --repositories) REPOSITORIES="$2"; shift 2;;
+        # -- means the end of the arguments; drop this, and break out of the while loop
+        --) shift; break;;
+        # If invalid options were passed, then getopt should have reported an error,
+        # which we checked as VALID_ARGUMENTS when getopt was called...
+        *) echo "Unexpected option: $1 - this should not happen."
+            usage;;
+    esac
 done
+
+if [ -z "$BLOBSTORES" ]; then
+    echo "$0 A Nexus blobstore definition was not provided."
+else
+    echo "$0 The Nexus blobstore definition provided was: $BLOBSTORES"
+    if [[ -f "$BLOBSTORES" ]]; then
+        echo "Found $BLOBSTORES"
+        # This script will exit on error.
+        $SCRIPT_DIR/nexus-blobstores-create "$BLOBSTORES"
+    else
+        echo "$BLOBSTORES was not found. Exiting now."
+        exit 1
+    fi
+fi
+
+if [ -z "$REPOSITORIES" ]; then
+    echo "$0 A Nexus repository definition was not provided."
+else
+    echo "$0 The Nexus repository definition provided was: $REPOSITORIES"
+    if [[ -f "$REPOSITORIES" ]]; then
+        echo "Found $REPOSITORIES"
+        # This script will exit on error.
+        $SCRIPT_DIR/nexus-repositories-create "$REPOSITORIES"
+    else
+        echo "$REPOSITORIES was not found. Exiting now."
+        exit 1
+    fi
+
+fi
