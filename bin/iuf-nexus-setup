@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+#
+# MIT License
+#
+# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+
+SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
+
+usage()
+{
+    echo "Usage: $0 requires one or more arguments:"
+    echo "       [ -b | --blobstores full-path-to-nexus-blobstores.yaml ] [ -r | --repositories full-path-to-nexus-repositories.yaml ]"
+    exit 1
+}
+
+if [[ $# -eq 0 ]]; then
+    usage
+    exit 1
+fi
+
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o b:r: --long blobstores:,repositories: -- "$@")
+VALID_ARGUMENTS=$?
+if [ "$VALID_ARGUMENTS" != "0" ]; then
+    usage
+fi
+
+eval set -- "$PARSED_ARGUMENTS"
+while :
+do
+    case "$1" in
+        -b | --blobstores) BLOBSTORES="$2"; shift 2;;
+        -r | --repositories) REPOSITORIES="$2"; shift 2;;
+        # -- means the end of the arguments; drop this, and break out of the while loop
+        --) shift; break;;
+        # If invalid options were passed, then getopt should have reported an error,
+        # which we checked as VALID_ARGUMENTS when getopt was called...
+        *) echo "Unexpected option: $1 - this should not happen."
+            usage;;
+    esac
+done
+
+if [ -z "$BLOBSTORES" ]; then
+    echo "$0 A Nexus blobstore definition was not provided. Skipping."
+else
+    echo "$0 The Nexus blobstore definition provided was: $BLOBSTORES"
+    if echo "$BLOBSTORES" | grep -q '=jsonpath'; then
+      # When the value is not found, Argo will return the search string. We look for that here.
+      echo "It appears that no file name was provided in the product manifest. Skipping."
+    elif [[ -f "$BLOBSTORES" ]]; then
+        echo "Found $BLOBSTORES"
+        # This script will exit on error.
+        $SCRIPT_DIR/nexus-blobstores-create "$BLOBSTORES"
+    else
+        echo "$BLOBSTORES was not found. Exiting now."
+        exit 1
+    fi
+fi
+
+if [ -z "$REPOSITORIES" ]; then
+    echo "$0 A Nexus repository definition was not provided. Skipping."
+else
+    echo "$0 The Nexus repository definition provided was: $REPOSITORIES"
+    if echo "$REPOSITORIES" | grep -q '=jsonpath'; then
+      # When the value is not found, Argo will return the search string. We look for that here.
+      echo "It appears that no file name was provided in the product manifest. Skipping."
+    elif [[ -f "$REPOSITORIES" ]]; then
+        echo "Found $REPOSITORIES"
+        # This script will exit on error.
+        $SCRIPT_DIR/nexus-repositories-create "$REPOSITORIES"
+    else
+        echo "$REPOSITORIES was not found. Exiting now."
+        exit 1
+    fi
+
+fi

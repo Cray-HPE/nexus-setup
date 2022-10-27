@@ -40,6 +40,7 @@ function find_repo(){
 }
 
 while [[ $# -gt 0 ]]; do
+    echo "$0 processing $1"
     nrepos=$(yq r -d '*' -X -c -l "$1")
 
     for (( i=0; i<nrepos; i++ )); do
