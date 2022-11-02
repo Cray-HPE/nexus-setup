@@ -37,17 +37,19 @@ usage()
 {
     echo "Usage: $0 DIRECTORY"
     echo "Uploads a DIRECTORY of container images to the Nexus registry."
-    exit 1
+    exit 0 # Without error since the parameter may not have been included.
 }
 
 if [[ $# -eq 0 ]]; then
     echo "Missing DIRECTORY argument."
+    echo "Skipping this operation."
     usage
 fi
 
 src="$1"
 if [[ ! -d "/images/$src" ]]; then
     echo "$0: Invalid directory $src"
+    echo "Skipping this operation."
     usage
 fi
 
