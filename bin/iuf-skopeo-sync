@@ -23,8 +23,6 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-set -x
-
 usage(){
     echo "Usage: $0 JSON_IUF_DOCKER_META"
     echo "Uploads container images from the location(s) given by the JSON_IUF_DOCKER_META structure to the Nexus registry."
