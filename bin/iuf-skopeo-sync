@@ -23,7 +23,15 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-# usage: skopeo-sync DIRECTORY
+set -x
+
+usage(){
+    echo "Usage: $0 JSON_IUF_DOCKER_META"
+    echo "Uploads container images from the location(s) given by the JSON_IUF_DOCKER_META structure to the Nexus registry."
+    exit 0 # Without error since the parameter may not have been included.
+}
+
+# usage: process DIRECTORY
 #
 # Uploads a DIRECTORY of container images to the Nexus registry.
 #
@@ -33,28 +41,45 @@
 #   NEXUS_USERNAME - The Nexus admin user name.
 #   NEXUS_PASSWORD - The Nexus admin password.
 #
-usage()
-{
-    echo "Usage: $0 DIRECTORY"
-    echo "Uploads a DIRECTORY of container images to the Nexus registry."
-    exit 0 # Without error since the parameter may not have been included.
+process(){
+    docker_dir="$1"
+    if [[ ! -d "/images/$docker_dir" ]]; then
+        echo "$0: Invalid directory $src"
+        echo "Skipping the skopeo sync operation for $docker_dir"
+        return 1
+    fi
+
+    # Remove the leading path element. 
+    ns_path=$(echo $docker_dir|cut -d'/' -f2-)
+
+    skopeo sync --scoped \
+        --src dir --dest docker \
+        --dest-creds "${NEXUS_USERNAME:-admin}:${NEXUS_PASSWORD}" \
+        --dest-tls-verify=false \
+        /images/"$docker_dir" ${NEXUS_REGISTRY:-registry.local}/$ns_path
 }
 
 if [[ $# -eq 0 ]]; then
-    echo "Missing DIRECTORY argument."
+    echo "Missing docker context from the IUF manifest."
     echo "Skipping this operation."
     usage
 fi
 
-src="$1"
-if [[ ! -d "/images/$src" ]]; then
-    echo "$0: Invalid directory $src"
-    echo "Skipping this operation."
-    usage
+# Although the manifest data is yaml, it is passed in json format from Argo
+# in this context.
+json_docker_context="$1"
+docker_dirs=$(echo "$json_docker_context" | jq '.docker | length')
+if [[ -z "$docker_dirs" ]]; then
+    echo "Did not receive any docker directory context."
+    exit 0
 fi
 
-skopeo sync --scoped \
-    --src dir --dest docker \
-    --dest-creds "${NEXUS_USERNAME:-admin}:${NEXUS_PASSWORD}" \
-    --dest-tls-verify=false \
-    /images/"$src" ${NEXUS_REGISTRY:-registry.local}/$src
+for (( i=0; i<${docker_dirs}; i++ ));
+do
+    path=$(echo "$json_docker_context" | jq -r '.docker['$i'].path')
+    echo "Processing docker images at $path"
+    process "$path"
+    rc=$?
+    echo "Return code was $rc"
+    # TBD - decide if we should just log the error or exit at this point.
+done
