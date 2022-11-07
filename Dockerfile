@@ -2,7 +2,7 @@
 
 FROM artifactory.algol60.net/docker.io/library/alpine
 
-RUN apk --update upgrade --no-cache && apk add --no-cache bash curl parallel
+RUN apk --update upgrade --no-cache && apk add --no-cache bash curl parallel skopeo
 
 RUN curl -sfL https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -o /usr/bin/yq \
     && chmod +x /usr/bin/yq

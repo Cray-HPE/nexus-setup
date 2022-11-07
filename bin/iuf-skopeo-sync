@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+#
+# MIT License
+#
+# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+
+usage(){
+    echo "Usage: $0 JSON_IUF_DOCKER_META"
+    echo "Uploads container images from the location(s) given by the JSON_IUF_DOCKER_META structure to the Nexus registry."
+    exit 0 # Without error since the parameter may not have been included.
+}
+
+# usage: process DIRECTORY
+#
+# Uploads a DIRECTORY of container images to the Nexus registry.
+#
+# Requires the following environment variables to be set:
+#
+#   NEXUS_REGISTRY - Hostname of Nexus registry; defaults to registry.local
+#   NEXUS_USERNAME - The Nexus admin user name.
+#   NEXUS_PASSWORD - The Nexus admin password.
+#
+process(){
+    docker_dir="$1"
+    if [[ ! -d "/images/$docker_dir" ]]; then
+        echo "$0: Invalid directory $src"
+        echo "Skipping the skopeo sync operation for $docker_dir"
+        return 1
+    fi
+
+    # Remove the leading path element. 
+    ns_path=$(echo $docker_dir|cut -d'/' -f2-)
+
+    skopeo sync --scoped \
+        --src dir --dest docker \
+        --dest-creds "${NEXUS_USERNAME:-admin}:${NEXUS_PASSWORD}" \
+        --dest-tls-verify=false \
+        /images/"$docker_dir" ${NEXUS_REGISTRY:-registry.local}/$ns_path
+}
+
+if [[ $# -eq 0 ]]; then
+    echo "Missing docker context from the IUF manifest."
+    echo "Skipping this operation."
+    usage
+fi
+
+# Although the manifest data is yaml, it is passed in json format from Argo
+# in this context.
+json_docker_context="$1"
+docker_dirs=$(echo "$json_docker_context" | jq '.docker | length')
+if [[ -z "$docker_dirs" ]]; then
+    echo "Did not receive any docker directory context."
+    exit 0
+fi
+
+for (( i=0; i<${docker_dirs}; i++ ));
+do
+    path=$(echo "$json_docker_context" | jq -r '.docker['$i'].path')
+    echo "Processing docker images at $path"
+    process "$path"
+    rc=$?
+    echo "Return code was $rc"
+    # TBD - decide if we should just log the error or exit at this point.
+done
