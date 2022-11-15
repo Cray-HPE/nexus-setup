@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+#
+# MIT License
+#
+# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+
+SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
+
+usage(){
+    echo "Usage: $0 JSON_IUF_HELM_META"
+    echo "Uploads Helm chart(s) from the location(s) given by the JSON_RPM_HELM_META structure to the Nexus registry."
+    exit 0 # Without error since the parameter may not have been included.
+}
+
+# usage: process HELM_PATH
+#
+# Uploads the contents in the Helm directory at HELM_PATH to the Nexus chart repositry.
+#
+# The following arguments are required:
+#
+#   HELM_PATH - The directory from which Nexus will source Helm data for loading into the chart repository.
+#   HELM_REPO - The Helm chart repositry in Nexus.
+#
+# Requires the following environment variables to be set:
+#
+#   NEXUS_REGISTRY - Hostname of Nexus registry; defaults to registry.local
+#   NEXUS_USERNAME - The Nexus admin user name.
+#   NEXUS_PASSWORD - The Nexus admin password.
+
+process(){
+    helm_path="/product/$1"
+    helm_repo="$2"
+
+    if [[ ! -d "$helm_path" ]]; then
+        echo "$0: Invalid directory $helm_path"
+        echo "Skipping the Helm upload operation for $helm_path"
+        return 1
+    fi
+
+    # Each file under the Helm path will be processed individually and logged. For each file:
+    # If the chart repo did not exist, a 404 will be logged. It is expected that the repository
+    # was created earlier.
+    # If the chart did not exist, a 204 (created) will be logged.
+    # If the chart exists already, a 400 will be logged.
+    $SCRIPT_DIR/nexus-upload-repo-helm "$helm_path" "$helm_repo"
+}
+
+# When called by Argo, this is the one expected argument with the content from
+# the manifest.
+if [[ $# -eq 0 ]]; then
+    echo "Did not find Helm context in the IUF manifest."
+    echo "Skipping this operation."
+    usage
+fi
+
+# Although the manifest data is yaml, it is passed in json format from Argo
+# in this context.
+json_helm_context="$1"
+helm_dirs=$(echo "$json_helm_context" | jq '.helm | length')
+if [[ -z "$helm_dirs" ]]; then
+    echo "Did not receive any Helm directory context."
+    exit 0
+fi
+
+err=0
+for (( i=0; i<${helm_dirs}; i++ ));
+do
+    helm_path=$(echo "$json_helm_context" | jq -r '.helm['$i'].path')
+    echo "Processing Helm content at $helm_path"
+    # At present, we have one 'charts' Helm repository defined in Nexus. That reposiotry is
+    # shared by all products. Should that change, the IUF manifest schema may want to include
+    # a chart repositry name. For now, we provide the chart repo name here. 
+    process "$helm_path" "charts"
+    # Attempt to process all of the supplied Helm directories. Exit at the end with non-zero
+    # if any errors are detected. The Argo log will therefore have all errors associated with
+    # this operation for review.
+    rc=$?
+    if [ $rc -ne 0 ]; then
+        err=1
+    fi
+done
+exit $err
