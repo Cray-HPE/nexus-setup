@@ -76,7 +76,7 @@ while [[ $# -gt 0 ]]; do
         repo_format="$(yq r "$tmpfile" 'format')"
         repo_type="$(yq r "$tmpfile" 'type')"
         if [[ $repo_type == "group" ]]; then
-            readarray repo_members < <(yq r "$tmpfile" 'group.memberNames[*]')
+            repo_members=($(yq r "$tmpfile" 'group.memberNames[*]'))
         else
             repo_members=()
         fi
