@@ -10,8 +10,9 @@ WORKDIR="$(mktemp -d)"
 
 # Store results in this file.
 RESULTS_FILE="/results/records.yaml"
+RESULTS_HEADER_FILE=$(mktemp)
 mkdir -p "$(dirname "$RESULTS_FILE")"
-cat << EOF > "$RESULTS_FILE"
+cat << EOF > "$RESULTS_HEADER_FILE"
 component_versions:
   repositories:
 EOF
@@ -48,12 +49,17 @@ function find_repo(){
     fi
 }
 
+
 function record_result(){
     # append records for a single repository to the results file.
     repo_name="$1"
     repo_type="$2"
     shift 2
     repo_members=("$@")
+    # Create results file when recording the first result.
+    if [[ ! -f "$RESULTS_FILE" ]]; then
+        mv "$RESULTS_HEADER_FILE" "$RESULTS_FILE"
+    fi
     echo "  - name: ${repo_name}" >> "$RESULTS_FILE"
     echo "    type: ${repo_type}" >> "$RESULTS_FILE"
     if [[ ${#repo_members[@]} -gt 0 ]]; then
@@ -129,3 +135,9 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+# If we have made it this far, ensure something has been written to the results file.
+# This addresses an edge case in which nexus-repositories-create successfully processed an
+# empty nexus-repositories.yaml file.
+if [[ ! -f "$RESULTS_FILE" ]]; then
+    echo "{}" > "$RESULTS_FILE"
+fi
