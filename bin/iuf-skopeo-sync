@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,15 @@ usage(){
     exit 0 # Without error since the parameter may not have been included.
 }
 
+# Store results in this file.
+RESULTS_FILE="/results/records.yaml"
+RESULTS_HEADER_FILE=$(mktemp)
+mkdir -p "$(dirname "$RESULTS_FILE")"
+cat << EOF > "$RESULTS_HEADER_FILE"
+component_versions:
+  docker:
+EOF
+
 # usage: process DIRECTORY
 #
 # Uploads a DIRECTORY of container images to the Nexus registry.
@@ -50,12 +59,43 @@ process(){
     # Remove the leading path element. 
     ns_path=$(echo $docker_dir|cut -d'/' -f2-)
 
-    skopeo sync --scoped \
+    if skopeo sync --scoped \
         --src dir --dest docker \
         --dest-creds "${NEXUS_USERNAME:-admin}:${NEXUS_PASSWORD}" \
         --dest-tls-verify=false \
-        /images/"$docker_dir" ${NEXUS_REGISTRY:-registry.local}/$ns_path
+        /images/"$docker_dir" ${NEXUS_REGISTRY:-registry.local}/$ns_path; then
+
+        # Record results for each image. Note that we have to search the directory for
+        # things that appear to be docker images here, which unfortunately is not directly
+        # looking at the result of the `skopeo sync` command.
+        find "/images/$docker_dir" -name "manifest.json" | while read -r manifest_file; do
+            image_name_and_version=$(basename "$(dirname "$manifest_file")")
+            image_name="$(cut -d":" -f 1 <<< "$image_name_and_version")"
+            image_version="$(cut -d":" -f 2 <<< "$image_name_and_version")"
+            echo "INFO recording results for ${image_name}:${image_version}"
+            record_result "$image_name" "$image_version"
+        done
+
+    fi
+
 }
+
+# usage: record_result IMAGE_NAME IMAGE_VERSION
+#
+# Writes part of the results to the $RESULTS_FILE.
+#
+function record_result(){
+    # append records for a single repository to the results file.
+    image_name="$1"
+    image_version="$2"
+    # Create results file when recording the first result.
+    if [[ ! -f "$RESULTS_FILE" ]]; then
+        mv "$RESULTS_HEADER_FILE" "$RESULTS_FILE"
+    fi
+    echo "  - name: ${image_name}" >> "$RESULTS_FILE"
+    echo "    version: ${image_version}" >> "$RESULTS_FILE"
+}
+
 
 if [[ $# -eq 0 ]]; then
     echo "Missing docker context from the IUF manifest."
@@ -81,3 +121,10 @@ do
     echo "Return code was $rc"
     # TBD - decide if we should just log the error or exit at this point.
 done
+
+# If we have made it this far, ensure something has been written to the results file.
+# This addresses an edge case in which we successfully processed an empty images
+# directory, or if the skopeo command failed.
+if [[ ! -f "$RESULTS_FILE" ]]; then
+    echo "{}" > "$RESULTS_FILE"
+fi
