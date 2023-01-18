@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,67 @@ usage(){
     echo "Uploads Helm chart(s) from the location(s) given by the JSON_RPM_HELM_META structure to the Nexus registry."
     exit 0 # Without error since the parameter may not have been included.
 }
+
+# Store results in this file.
+RESULTS_FILE="/results/records.yaml"
+RESULTS_HEADER_FILE=$(mktemp)
+mkdir -p "$(dirname "$RESULTS_FILE")"
+cat << EOF > "$RESULTS_HEADER_FILE"
+component_versions:
+  helm:
+EOF
+
+# usage: record_result CHART_NAME CHART_VERSION
+#
+# Writes part of the results to the $RESULTS_FILE.
+#
+function record_result(){
+    # append records for a single repository to the results file.
+    chart_name="$1"
+    chart_version="$2"
+    # Create results file when recording the first result.
+    if [[ ! -f "$RESULTS_FILE" ]]; then
+        mv "$RESULTS_HEADER_FILE" "$RESULTS_FILE"
+    fi
+    echo "  - name: ${chart_name}" >> "$RESULTS_FILE"
+    echo "    version: ${chart_version}" >> "$RESULTS_FILE"
+}
+
+# usage: get_chart_yaml CHART_PATH
+#
+# Given a path to a compressed/archived helm chart, get a temporary
+# path to the Chart.yaml file.
+#
+function get_chart_yaml(){
+    chart_path="$1"
+    extracted_location="$(mktemp -d)"
+    tar -xzf "$chart_path" -C "$extracted_location"
+    # There should only be one expanded Chart.yaml path based on
+    # how the compressed charts are structured.
+    chart_yaml_files=("${extracted_location}"/*/Chart.yaml)
+    echo "${chart_yaml_files[0]}"
+}
+
+# usage: get_chart_name CHART_YAML_PATH
+#
+# Given a path to a helm chart's Chart.yaml file, get the chart's name
+#
+function get_chart_name(){
+    chart_yaml_file="$1"
+    chart_name=$(yq r "${chart_yaml_file}" "name")
+    echo "${chart_name}"
+}
+
+# usage: get_chart_version CHART_YAML_PATH
+#
+# Given a path to a helm chart's Chart.yaml file, get the chart's version
+#
+function get_chart_version(){
+    chart_yaml_file="$1"
+    chart_version=$(yq r "${chart_yaml_file}" "version")
+    echo "${chart_version}"
+}
+
 
 # usage: process HELM_PATH
 #
@@ -62,6 +123,16 @@ process(){
     # If the chart did not exist, a 204 (created) will be logged.
     # If the chart exists already, a 400 will be logged.
     $SCRIPT_DIR/nexus-upload-repo-helm "$helm_path" "$helm_repo"
+
+    # For each chart on $helm_path, get its name and version, and
+    # add it to the results file.
+    find "$helm_path" -name "*.tgz" | while read -r chart_path; do
+        chart_yaml_path=$(get_chart_yaml "$chart_path")
+        chart_name=$(get_chart_name "$chart_yaml_path")
+        chart_version=$(get_chart_version "$chart_yaml_path")
+        record_result "$chart_name" "$chart_version"
+    done
+
 }
 
 # When called by Argo, this is the one expected argument with the content from
@@ -86,9 +157,9 @@ for (( i=0; i<${helm_dirs}; i++ ));
 do
     helm_path=$(echo "$json_helm_context" | jq -r '.helm['$i'].path')
     echo "Processing Helm content at $helm_path"
-    # At present, we have one 'charts' Helm repository defined in Nexus. That reposiotry is
+    # At present, we have one 'charts' Helm repository defined in Nexus. That repository is
     # shared by all products. Should that change, the IUF manifest schema may want to include
-    # a chart repositry name. For now, we provide the chart repo name here. 
+    # a chart repository name. For now, we provide the chart repo name here.
     process "$helm_path" "charts"
     # Attempt to process all of the supplied Helm directories. Exit at the end with non-zero
     # if any errors are detected. The Argo log will therefore have all errors associated with
@@ -99,3 +170,10 @@ do
     fi
 done
 exit $err
+
+# If we have made it this far, ensure something has been written to the results file.
+# This addresses an edge case in which we successfully processed an empty helm
+# directory, or if the uploads all failed.
+if [[ ! -f "$RESULTS_FILE" ]]; then
+    echo "{}" > "$RESULTS_FILE"
+fi
