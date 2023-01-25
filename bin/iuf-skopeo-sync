@@ -38,6 +38,9 @@ component_versions:
   docker:
 EOF
 
+# Ensure we have written something to the output file when we exit
+trap 'ensure-results-file-exists $RESULTS_FILE' EXIT
+
 # usage: process DIRECTORY
 #
 # Uploads a DIRECTORY of container images to the Nexus registry.
@@ -121,10 +124,3 @@ do
     echo "Return code was $rc"
     # TBD - decide if we should just log the error or exit at this point.
 done
-
-# If we have made it this far, ensure something has been written to the results file.
-# This addresses an edge case in which we successfully processed an empty images
-# directory, or if the skopeo command failed.
-if [[ ! -f "$RESULTS_FILE" ]]; then
-    echo "{}" > "$RESULTS_FILE"
-fi

@@ -134,10 +134,3 @@ while [[ $# -gt 0 ]]; do
 
     shift
 done
-
-# If we have made it this far, ensure something has been written to the results file.
-# This addresses an edge case in which nexus-repositories-create successfully processed an
-# empty nexus-repositories.yaml file.
-if [[ ! -f "$RESULTS_FILE" ]]; then
-    echo "{}" > "$RESULTS_FILE"
-fi
