@@ -60,12 +60,12 @@ function record_result(){
     if [[ ! -f "$RESULTS_FILE" ]]; then
         mv "$RESULTS_HEADER_FILE" "$RESULTS_FILE"
     fi
-    echo "  - name: ${repo_name}" >> "$RESULTS_FILE"
-    echo "    type: ${repo_type}" >> "$RESULTS_FILE"
+    echo "  - name: '${repo_name}'" >> "$RESULTS_FILE"
+    echo "    type: '${repo_type}'" >> "$RESULTS_FILE"
     if [[ ${#repo_members[@]} -gt 0 ]]; then
       echo "    members:" >> "$RESULTS_FILE"
       for member in "${repo_members[@]}"; do
-          echo "    - ${member}" >> "$RESULTS_FILE"
+          echo "    - '${member}'" >> "$RESULTS_FILE"
       done
     fi
 }

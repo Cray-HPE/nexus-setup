@@ -55,8 +55,8 @@ function record_result(){
     if [[ ! -f "$RESULTS_FILE" ]]; then
         mv "$RESULTS_HEADER_FILE" "$RESULTS_FILE"
     fi
-    echo "  - name: ${chart_name}" >> "$RESULTS_FILE"
-    echo "    version: ${chart_version}" >> "$RESULTS_FILE"
+    echo "  - name: '${chart_name}'" >> "$RESULTS_FILE"
+    echo "    version: '${chart_version}'" >> "$RESULTS_FILE"
 }
 
 # usage: get_chart_yaml CHART_PATH
