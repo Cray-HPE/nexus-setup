@@ -43,6 +43,14 @@ if [ "$VALID_ARGUMENTS" != "0" ]; then
     usage
 fi
 
+# Recording of results is expected to be done in nexus-repositories-create,
+# but this script can exit without ever calling nexus-repositories-create,
+# so we need to make sure this script creates the results file.
+RESULTS_FILE="/results/records.yaml"
+# Ensure we have written something to the output file when we exit
+trap 'ensure-results-file-exists $RESULTS_FILE' EXIT
+
+
 eval set -- "$PARSED_ARGUMENTS"
 while :
 do

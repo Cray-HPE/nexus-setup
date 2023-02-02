@@ -60,12 +60,12 @@ function record_result(){
     if [[ ! -f "$RESULTS_FILE" ]]; then
         mv "$RESULTS_HEADER_FILE" "$RESULTS_FILE"
     fi
-    echo "  - name: ${repo_name}" >> "$RESULTS_FILE"
-    echo "    type: ${repo_type}" >> "$RESULTS_FILE"
+    echo "  - name: '${repo_name}'" >> "$RESULTS_FILE"
+    echo "    type: '${repo_type}'" >> "$RESULTS_FILE"
     if [[ ${#repo_members[@]} -gt 0 ]]; then
       echo "    members:" >> "$RESULTS_FILE"
       for member in "${repo_members[@]}"; do
-          echo "    - ${member}" >> "$RESULTS_FILE"
+          echo "    - '${member}'" >> "$RESULTS_FILE"
       done
     fi
 }
@@ -134,10 +134,3 @@ while [[ $# -gt 0 ]]; do
 
     shift
 done
-
-# If we have made it this far, ensure something has been written to the results file.
-# This addresses an edge case in which nexus-repositories-create successfully processed an
-# empty nexus-repositories.yaml file.
-if [[ ! -f "$RESULTS_FILE" ]]; then
-    echo "{}" > "$RESULTS_FILE"
-fi
