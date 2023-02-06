@@ -78,9 +78,9 @@ process(){
             echo "INFO recording results for ${image_name}:${image_version}"
             record_result "$image_name" "$image_version"
         done
-
+    else
+        return 1
     fi
-
 }
 
 # usage: record_result IMAGE_NAME IMAGE_VERSION
@@ -115,12 +115,15 @@ if [[ -z "$docker_dirs" ]]; then
     exit 0
 fi
 
+exit_code=0
 for (( i=0; i<${docker_dirs}; i++ ));
 do
     path=$(echo "$json_docker_context" | jq -r '.docker['$i'].path')
     echo "Processing docker images at $path"
-    process "$path"
-    rc=$?
-    echo "Return code was $rc"
-    # TBD - decide if we should just log the error or exit at this point.
+    if ! process "$path"; then
+        exit_code=1
+    fi
 done
+
+echo "Exit code is ${exit_code}"
+exit $exit_code

@@ -125,16 +125,18 @@ process(){
     # was created earlier.
     # If the chart did not exist, a 204 (created) will be logged.
     # If the chart exists already, a 400 will be logged.
-    $SCRIPT_DIR/nexus-upload-repo-helm "$helm_path" "$helm_repo"
-
-    # For each chart on $helm_path, get its name and version, and
-    # add it to the results file.
-    find "$helm_path" -name "*.tgz" | while read -r chart_path; do
-        chart_yaml_path=$(get_chart_yaml "$chart_path")
-        chart_name=$(get_chart_name "$chart_yaml_path")
-        chart_version=$(get_chart_version "$chart_yaml_path")
-        record_result "$chart_name" "$chart_version"
-    done
+    if $SCRIPT_DIR/nexus-upload-repo-helm "$helm_path" "$helm_repo"; then
+        # For each chart on $helm_path, get its name and version, and
+        # add it to the results file.
+        find "$helm_path" -name "*.tgz" | while read -r chart_path; do
+            chart_yaml_path=$(get_chart_yaml "$chart_path")
+            chart_name=$(get_chart_name "$chart_yaml_path")
+            chart_version=$(get_chart_version "$chart_yaml_path")
+            record_result "$chart_name" "$chart_version"
+        done
+    else
+        return 1
+    fi
 
 }
 
