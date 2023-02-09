@@ -23,6 +23,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+shopt -s extglob
+
 usage(){
     echo "Usage: $0 JSON_IUF_DOCKER_META"
     echo "Uploads container images from the location(s) given by the JSON_IUF_DOCKER_META structure to the Nexus registry."
@@ -59,22 +61,27 @@ process(){
         return 1
     fi
 
-    # Remove the leading path element. 
-    ns_path=$(echo $docker_dir|cut -d'/' -f2-)
+    # Ensure $docker_dir ends with exactly one slash
+    docker_dir="${docker_dir%%+(/)}/"
 
     if skopeo sync --scoped \
         --src dir --dest docker \
         --dest-creds "${NEXUS_USERNAME:-admin}:${NEXUS_PASSWORD}" \
         --dest-tls-verify=false \
-        /images/"$docker_dir" ${NEXUS_REGISTRY:-registry.local}/$ns_path; then
+        /images/"$docker_dir" "${NEXUS_REGISTRY:-registry.local}"; then
 
         # Record results for each image. Note that we have to search the directory for
         # things that appear to be docker images here, which unfortunately is not directly
         # looking at the result of the `skopeo sync` command.
         find "/images/$docker_dir" -name "manifest.json" | while read -r manifest_file; do
-            image_name_and_version=$(basename "$(dirname "$manifest_file")")
-            image_name="$(cut -d":" -f 1 <<< "$image_name_and_version")"
-            image_version="$(cut -d":" -f 2 <<< "$image_name_and_version")"
+            # Get the path to the image relative to the specified $docker_dir, as that
+            # is the name of the image that was uploaded. For example, if images are found
+            # in /images/docker/cray/IMAGE:VERSION and $docker_dir is 'docker/', images were
+            # uploaded as "cray/IMAGE:VERSION".
+            relative_manifest_path="${manifest_file##/images/${docker_dir}}"
+            image_dir="$(dirname "$relative_manifest_path")"
+            image_name="$(cut -d":" -f 1 <<< "$image_dir")"
+            image_version="$(cut -d":" -f 2 <<< "$image_dir")"
             echo "INFO recording results for ${image_name}:${image_version}"
             record_result "$image_name" "$image_version"
         done
