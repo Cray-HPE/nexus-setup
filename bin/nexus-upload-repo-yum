@@ -3,7 +3,7 @@
 # Copyright 2022 Hewlett Packard Enterprise Development LP
 
 if [[ $# -ne 2 ]]; then
-    echo >&2 "usage: ${0##*/} SRC-DIRECTORY DEST-REPOSITORY"
+    echo >&2 "INFO usage: ${0##*/} , two arguments required: SRC-DIRECTORY DEST-REPOSITORY "
     exit 1
 fi
 
@@ -12,11 +12,11 @@ repo="$2"
 shift 2
 
 if [[ ! -d "$path" ]]; then
-    echo >&2 "error: no such directory: $path"
+    echo >&2 "ERROR No such directory: $path"
     exit 1
 fi
 
-command -v parallel >/dev/null 2>&1 || { echo >&2 "command not found: parallel"; exit 1; }
+command -v parallel >/dev/null 2>&1 || { echo >&2 "ERROR 'parallel' command not found"; exit 1; }
 
 . "$(command -v nexus-ready)"
 
@@ -36,11 +36,11 @@ upload-asset-yum() {
             -F "yum.directory=$(dirname "$asset")" \
             -F "yum.asset.filename=$(basename "$asset")" \
             -F "yum.asset=@${file}")"
-        echo "$status"
+        echo "DEBUG <curl to URL  ${URL}/v1/components?repository=${repo}> completed with: $status"
         status="${status%% *}"
     done
 
-    if [[ "$status" = "204" ]]; then echo "created"; else echo "exists"; fi
+    if [[ "$status" = "204" ]]; then echo "INFO Repo created "; else echo "INFO Repo already exists"; fi
 }
 
 export URL path repo
@@ -51,3 +51,4 @@ find "$path" -name '*.rpm' -type f \
         "-j${PARALLEL_JOBS:-32}" \
         "${PARALLEL_FLAGS}" \
         upload-asset-yum
+
