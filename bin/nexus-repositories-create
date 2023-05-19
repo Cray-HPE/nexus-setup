@@ -44,7 +44,7 @@ function find_repo(){
       echo -n >&2 "ERROR Could not find the ${repo_format}/${repo_type} repository: ${repo_name}"
       return 1
     else
-      echo -n >&2 "INFO Found ${repo_format}/${repo_type} repository: ${repo_name}"
+      echo -n >&2 "DEBUG Found ${repo_format}/${repo_type} repository: ${repo_name}"
       return 0
     fi
 }
@@ -71,7 +71,7 @@ function record_result(){
 }
 
 while [[ $# -gt 0 ]]; do
-    echo "INFO $0: Processing $1"
+    echo "DEBUG $0: Processing $1"
     nrepos=$(yq r -d '*' -X -c -l "$1")
 
     for (( i=0; i<nrepos; i++ )); do

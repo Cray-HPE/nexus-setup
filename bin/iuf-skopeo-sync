@@ -26,8 +26,8 @@
 shopt -s extglob
 
 usage(){
-    echo "INFO Usage: $0 JSON_IUF_DOCKER_META"
-    echo "INFO Uploads container images from the location(s) given by the JSON_IUF_DOCKER_META structure to the Nexus registry."
+    echo "Usage: $0 JSON_IUF_DOCKER_META"
+    echo "Uploads container images from the location(s) given by the JSON_IUF_DOCKER_META structure to the Nexus registry."
     exit 0 # Without error since the parameter may not have been included.
 }
 
@@ -81,12 +81,12 @@ process(){
             image_dir="$(dirname "$relative_manifest_path")"
             image_name="$(cut -d":" -f 1 <<< "$image_dir")"
             image_version="$(cut -d":" -f 2 <<< "$image_dir")"
-            echo "INFO Adding entry in 'records.yaml' file for image: ${image_name}:${image_version}"
+            echo "DEBUG Adding entry in 'records.yaml' file for image: ${image_name}:${image_version}"
             record_result "$image_name" "$image_version"
         done
     else
         result=$(echo "$result" | sed -e 's/^/DEBUG /')
-        echo -e "DEBUG <skopeo sync --scoped --src dir --dest docker --dest-creds "${NEXUS_USERNAME:-admin}:${NEXUS_PASSWORD}" --dest-tls-verify=false /images/"$docker_dir" "${NEXUS_REGISTRY:-registry.local}"> failed with\n\n$result"        
+        echo -e "DEBUG <skopeo sync --scoped --src dir --dest docker --dest-creds "${NEXUS_USERNAME:-admin}:<password>" --dest-tls-verify=false /images/"$docker_dir" "${NEXUS_REGISTRY:-registry.local}"> failed with\n\n$result"        
         return 1
     fi
 }
@@ -127,11 +127,16 @@ exit_code=0
 for (( i=0; i<${docker_dirs}; i++ ));
 do
     path=$(echo "$json_docker_context" | jq -r '.docker['$i'].path')
-    echo "INFO Processing docker images in directory: $path"
+    echo "DEBUG Processing docker images in directory: $path"
     if ! process "$path"; then
         exit_code=1
     fi
 done
 
-echo "INFO 'iuf-skopeo-sync' script completed with exit code: ${exit_code}"
+if [ $exit_code -eq 0]; then
+    echo ""INFO 'iuf-skopeo-sync' script completed successfully with Docker directory context "$json_docker_context""
+else
+    echo "ERROR 'iuf-skopeo-sync' script failed with Docker directory context "$json_docker_context""
+fi  
 exit $exit_code
+

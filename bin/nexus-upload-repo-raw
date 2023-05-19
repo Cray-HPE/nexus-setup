@@ -3,7 +3,7 @@
 # Copyright 2022 Hewlett Packard Enterprise Development LP
 
 if [[ $# -ne 2 ]]; then
-    echo >&2 "INFO Usage: ${0##*/} , two arguments required: SRC-DIRECTORY DEST-REPOSITORY"
+    echo >&2 "Usage: ${0##*/} , two arguments required: SRC-DIRECTORY DEST-REPOSITORY"
     exit 1
 fi
 
@@ -40,7 +40,7 @@ upload-asset-raw() {
         status="${status%% *}"
     done
 
-    if [[ "$status" = "204" ]]; then echo "INFO Repo created"; else echo "INFO Repo already exists"; fi
+    if [[ "$status" = "204" ]]; then echo "INFO Repo created"; else echo "INFO Repo already exists, no action needed"; fi
 }
 
 export URL path repo

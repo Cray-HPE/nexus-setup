@@ -26,8 +26,8 @@
 SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
 
 usage(){
-    echo "INFO Usage: $0 JSON_IUF_RPM_META"
-    echo "INFO Uploads RPM(s) from the location(s) given by the JSON_RPM_DOCKER_META structure to the Nexus registry."
+    echo "Usage: $0 JSON_IUF_RPM_META"
+    echo "Uploads RPM(s) from the location(s) given by the JSON_RPM_DOCKER_META structure to the Nexus registry."
     exit 0 # Without error since the parameter may not have been included.
 }
 
@@ -81,12 +81,12 @@ process(){
     if [[ "${repo_type,,}" == "raw" ]]; then
         # This will load type 'raw' RPM content from the directory at $repo_path into
         # the repository $repo_name.
-        echo "INFO Executing upload script for 'raw' RPM content from $repo_path into $repo_name"
+        echo "DEBUG Executing upload script for 'raw' RPM content from $repo_path into $repo_name"
         $SCRIPT_DIR/nexus-upload-repo-raw "$repo_path" "$repo_name"
     elif [[ "${repo_type,,}" == "yum" ]]; then
         # This will load type 'yum' RPM content from the directory at $repo_path into
         # the repository $repo_name.
-        echo "INFO Executing upload script for 'yum' RPM content from $repo_path into $repo_name"
+        echo "DEBUG Executing upload script for 'yum' RPM content from $repo_path into $repo_name"
         $SCRIPT_DIR/nexus-upload-repo-yum "$repo_path" "$repo_name"
     else
         echo "ERROR Received unsupported repo_type of ${repo_type,,} for $repo_path. Supported types are 'yum' and 'raw'. Skipping"
@@ -97,7 +97,7 @@ process(){
 # When called by Argo, this is the one expected argument with the content from
 # the manifest.
 if [[ $# -eq 0 ]]; then
-    echo "INFO No arguements were provided for the nexus upload in the IUF manifest , Skipping"
+    echo "ERROR No arguements were provided for the nexus upload in the IUF manifest , Skipping"
     usage
 fi
 
@@ -106,7 +106,7 @@ fi
 json_rpm_context="$1"
 rpm_dirs=$(echo "$json_rpm_context" | jq '.rpms | length')
 if [[ -z "$rpm_dirs" ]]; then
-    echo "INFO No RPM directory context was provided. Skipping"
+    echo "DEBUG No RPM directory context was provided. Skipping"
     exit 0
 fi
 
@@ -116,7 +116,7 @@ do
     repo_path=$(echo "$json_rpm_context" | jq -r '.rpms['$i'].path')
     repo_name=$(echo "$json_rpm_context" | jq -r '.rpms['$i'].repository_name')
     repo_type=$(echo "$json_rpm_context" | jq -r '.rpms['$i'].repository_type')
-    echo "INFO Processing RPM content at $repo_path (repo_name=$repo_name repo_type=$repo_type)"
+    echo "DEBUG Processing RPM content at $repo_path (repo_name=$repo_name repo_type=$repo_type)"
     process "$repo_path" "$repo_type" "$repo_name"
     # Attempt to process all of the repositories. Exit at the end with non-zero if any
     # errors are detected. The Argo log will therefore have all errors associated with
@@ -126,4 +126,11 @@ do
         err=1
     fi
 done
+
+if [ $err -eq 0]; then
+    echo "INFO 'iuf-rpm-upload' script completed successfully with RPM directory context "$json_rpm_context""
+else
+    echo "ERROR 'iuf-rpm-upload' script failed with RPM directory context "$json_rpm_context""
+fi  
 exit $err
+
