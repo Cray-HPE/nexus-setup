@@ -127,7 +127,7 @@ do
     fi
 done
 
-if [ $err -eq 0]; then
+if [ $err -eq 0 ]; then
     echo "INFO 'iuf-rpm-upload' script completed successfully with RPM directory context "$json_rpm_context""
 else
     echo "ERROR 'iuf-rpm-upload' script failed with RPM directory context "$json_rpm_context""

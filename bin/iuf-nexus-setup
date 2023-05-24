@@ -84,7 +84,7 @@ else
     fi
 fi
 
-if [ $err -eq 0 ] && [-z "$REPOSITORIES" ]; then
+if [ $err -eq 0 ] && [ -z "$REPOSITORIES" ]; then
     echo "DEBUG $0 A Nexus repository definition was not provided. Skipping"
 else
     echo "DEBUG $0 The Nexus repository definition provided was: $REPOSITORIES"
@@ -101,7 +101,7 @@ else
     fi
 fi
 
-if [ $err -eq 0]; then
+if [ $err -eq 0 ]; then
     echo "INFO 'iuf-nexus-setup' script completed successfully with nexus blobstore definition "$BLOBSTORES" and repository definition "$REPOSITORIES""
 else
     echo "ERROR 'iuf-nexus-setup' script failed with nexus blobstore definition "$BLOBSTORES" and repository definition "$REPOSITORIES""
