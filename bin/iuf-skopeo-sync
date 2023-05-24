@@ -134,7 +134,7 @@ do
 done
 
 if [ $exit_code -eq 0]; then
-    echo ""INFO 'iuf-skopeo-sync' script completed successfully with Docker directory context "$json_docker_context""
+    echo "INFO 'iuf-skopeo-sync' script completed successfully with Docker directory context "$json_docker_context""
 else
     echo "ERROR 'iuf-skopeo-sync' script failed with Docker directory context "$json_docker_context""
 fi  

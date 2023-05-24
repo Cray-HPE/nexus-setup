@@ -177,6 +177,6 @@ done
 if [ $err -eq 0]; then
     echo "INFO 'iuf-helm-upload' script completed successfully with Helm directory context "$json_helm_context""
 else
-    echo "ERROR 'iuf-helm-upload' script failed with Helm directory context directory"$json_helm_context""
+    echo "ERROR 'iuf-helm-upload' script failed with Helm directory context directory "$json_helm_context""
 fi  
 exit $err
