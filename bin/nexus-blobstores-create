@@ -11,7 +11,7 @@ trap "{ rm -rf '$WORKDIR'; }" EXIT
 
 # Create blobstores
 while [[ $# -gt 0 ]]; do
-    echo "INFO $0: Processing $1"
+    echo "DEBUG $0: Processing $1"
     nblobs=$(yq r -d '*' -X -c -l "$1")
 
     for (( i=0; i<nblobs; i++ )); do
