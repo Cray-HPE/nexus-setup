@@ -61,42 +61,49 @@ do
         --) shift; break;;
         # If invalid options were passed, then getopt should have reported an error,
         # which we checked as VALID_ARGUMENTS when getopt was called...
-        *) echo "Unexpected option: $1 - this should not happen."
+        *) echo "ERROR Unexpected option: $1 - this should not happen."
             usage;;
     esac
 done
 
+err=0
 if [ -z "$BLOBSTORES" ]; then
-    echo "$0 A Nexus blobstore definition was not provided. Skipping."
+    echo "DEBUG $0 A Nexus blobstore definition was not provided. Skipping"
 else
-    echo "$0 The Nexus blobstore definition provided was: $BLOBSTORES"
+    echo "DEBUG $0 The Nexus blobstore definition provided was: $BLOBSTORES"
     if echo "$BLOBSTORES" | grep -q '=jsonpath'; then
       # When the value is not found, Argo will return the search string. We look for that here.
-      echo "It appears that no file name was provided in the product manifest. Skipping."
+      echo "DEBUG It appears that no file name was provided in the product manifest for nexus_blob_stores. Skipping"
     elif [[ -f "$BLOBSTORES" ]]; then
-        echo "Found $BLOBSTORES"
+        echo "DEBUG Found the blobstores file - $BLOBSTORES"
         # This script will exit on error.
         $SCRIPT_DIR/nexus-blobstores-create "$BLOBSTORES"
     else
-        echo "$BLOBSTORES was not found. Exiting now."
-        exit 1
+        echo "ERROR $BLOBSTORES was not found. Exiting now"
+        err=1
     fi
 fi
 
-if [ -z "$REPOSITORIES" ]; then
-    echo "$0 A Nexus repository definition was not provided. Skipping."
+if [ $err -eq 0 ] && [ -z "$REPOSITORIES" ]; then
+    echo "DEBUG $0 A Nexus repository definition was not provided. Skipping"
 else
-    echo "$0 The Nexus repository definition provided was: $REPOSITORIES"
+    echo "DEBUG $0 The Nexus repository definition provided was: $REPOSITORIES"
     if echo "$REPOSITORIES" | grep -q '=jsonpath'; then
       # When the value is not found, Argo will return the search string. We look for that here.
-      echo "It appears that no file name was provided in the product manifest. Skipping."
+      echo "DEBUG It appears that no file name was provided in the product manifest for nexus_repositories. Skipping"
     elif [[ -f "$REPOSITORIES" ]]; then
-        echo "Found $REPOSITORIES"
+        echo "DEBUG Found the repositories file - $REPOSITORIES"
         # This script will exit on error.
         $SCRIPT_DIR/nexus-repositories-create "$REPOSITORIES"
     else
-        echo "$REPOSITORIES was not found. Exiting now."
-        exit 1
+        echo "ERROR The nexus repository definition file - $REPOSITORIES was not found. Exiting now"
+        err=1
     fi
-
 fi
+
+if [ $err -eq 0 ]; then
+    echo "INFO 'iuf-nexus-setup' script completed successfully with nexus blobstore definition "$BLOBSTORES" and repository definition "$REPOSITORIES""
+else
+    echo "ERROR 'iuf-nexus-setup' script failed with nexus blobstore definition "$BLOBSTORES" and repository definition "$REPOSITORIES""
+fi  
+exit $err

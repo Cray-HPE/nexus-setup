@@ -52,28 +52,24 @@ process(){
     repo_type="$2"
     repo_name="$3"
     if [[ ! -d "$repo_path" ]]; then
-        echo "$0: Invalid directory $repo_path"
-        echo "Skipping the RPM upload operation for $repo_path"
+        echo "ERROR $0: Invalid directory $repo_path , skipping the RPM upload operation"
         return 1
     fi
 
     if [[ -z "$repo_type" ]]; then
-        echo "Found empty repo_type"
-        echo "Skipping the RPM upload operation for $repo_path"
+        echo "ERROR The repo_type is empty , skipping the RPM upload operation for $repo_path"
+       
         return 1
     elif [[ "${repo_type,,}" == "null" ]]; then # jq will assign "null" is the element is missing
-        echo "It appears that repo_type is missing."
-        echo "Skipping the RPM upload operation for $repo_path"
+        echo "ERROR It appears that repo_type is missing , skipping the RPM upload operation for $repo_path"
         return 1
     fi
 
     if [[ -z "$repo_name" ]]; then
-        echo "Found empty repo_name"
-        echo "Skipping the RPM upload operation for $repo_path"
+        echo "ERROR The repo_name is empty , skipping the RPM upload operation for $repo_path"
         return 1
     elif [[ "${repo_name,,}" == "null" ]]; then # jq will assign "null" is the element is missing
-        echo "It appears that repo_name is missing."
-        echo "Skipping the RPM upload operation for $repo_path"
+        echo "ERROR It appears that repo_name is missing , skipping the RPM upload operation for $repo_path"
         return 1
     fi
 
@@ -85,14 +81,15 @@ process(){
     if [[ "${repo_type,,}" == "raw" ]]; then
         # This will load type 'raw' RPM content from the directory at $repo_path into
         # the repository $repo_name.
+        echo "DEBUG Executing upload script for 'raw' RPM content from $repo_path into $repo_name"
         $SCRIPT_DIR/nexus-upload-repo-raw "$repo_path" "$repo_name"
     elif [[ "${repo_type,,}" == "yum" ]]; then
         # This will load type 'yum' RPM content from the directory at $repo_path into
         # the repository $repo_name.
+        echo "DEBUG Executing upload script for 'yum' RPM content from $repo_path into $repo_name"
         $SCRIPT_DIR/nexus-upload-repo-yum "$repo_path" "$repo_name"
     else
-        echo "Received unsupported repo_type of ${repo_type,,} for $repo_path"
-        echo "Skipping the RPM upload operation for $repo_path"
+        echo "ERROR Received unsupported repo_type of ${repo_type,,} for $repo_path. Supported types are 'yum' and 'raw'. Skipping"
         return 1
     fi
 }
@@ -100,8 +97,7 @@ process(){
 # When called by Argo, this is the one expected argument with the content from
 # the manifest.
 if [[ $# -eq 0 ]]; then
-    echo "Did not find RPM context in the IUF manifest."
-    echo "Skipping this operation."
+    echo "ERROR No arguements were provided for the nexus upload in the IUF manifest , Skipping"
     usage
 fi
 
@@ -110,7 +106,7 @@ fi
 json_rpm_context="$1"
 rpm_dirs=$(echo "$json_rpm_context" | jq '.rpms | length')
 if [[ -z "$rpm_dirs" ]]; then
-    echo "Did not receive any RPM directory context."
+    echo "DEBUG No RPM directory context was provided. Skipping"
     exit 0
 fi
 
@@ -120,7 +116,7 @@ do
     repo_path=$(echo "$json_rpm_context" | jq -r '.rpms['$i'].path')
     repo_name=$(echo "$json_rpm_context" | jq -r '.rpms['$i'].repository_name')
     repo_type=$(echo "$json_rpm_context" | jq -r '.rpms['$i'].repository_type')
-    echo "Processing RPM content at $repo_path (repo_name=$repo_name repo_type=$repo_type)"
+    echo "DEBUG Processing RPM content at $repo_path (repo_name=$repo_name repo_type=$repo_type)"
     process "$repo_path" "$repo_type" "$repo_name"
     # Attempt to process all of the repositories. Exit at the end with non-zero if any
     # errors are detected. The Argo log will therefore have all errors associated with
@@ -130,4 +126,11 @@ do
         err=1
     fi
 done
+
+if [ $err -eq 0 ]; then
+    echo "INFO 'iuf-rpm-upload' script completed successfully with RPM directory context "$json_rpm_context""
+else
+    echo "ERROR 'iuf-rpm-upload' script failed with RPM directory context "$json_rpm_context""
+fi  
 exit $err
+
