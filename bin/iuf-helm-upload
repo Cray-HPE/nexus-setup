@@ -72,7 +72,7 @@ function get_chart_yaml(){
     # how the compressed charts are structured.
     chart_yaml_files=("${extracted_location}"/*/Chart.yaml)
     echo "${chart_yaml_files[0]}"
-    echo "DEBUG Helm chart file is: ${chart_yaml_files[0]}" <&2
+    echo "DEBUG Helm chart file is: ${chart_yaml_files[0]}" >&2
 }
 
 # usage: get_chart_name CHART_YAML_PATH
@@ -83,7 +83,7 @@ function get_chart_name(){
     chart_yaml_file="$1"
     chart_name=$(yq r "${chart_yaml_file}" "name")
     echo "${chart_name}"
-    echo "DEBUG Helm chart name for file: ${chart_yaml_file} is ${chart_name}" <&2
+    echo "DEBUG Helm chart name for file: ${chart_yaml_file} is ${chart_name}" >&2
 }
 
 # usage: get_chart_version CHART_YAML_PATH
@@ -94,7 +94,7 @@ function get_chart_version(){
     chart_yaml_file="$1"
     chart_version=$(yq r "${chart_yaml_file}" "version")
     echo "${chart_version}"
-    echo "DEBUG Chart version for file: ${chart_yaml_file} is ${chart_version}" <&2
+    echo "DEBUG Chart version for file: ${chart_yaml_file} is ${chart_version}" >&2
 }
 
 
