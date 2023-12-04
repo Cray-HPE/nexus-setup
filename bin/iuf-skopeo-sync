@@ -59,7 +59,13 @@ process(){
         echo "ERROR $0: Invalid directory $src. Skipping the 'skopeo sync' operation for $docker_dir"
         return 1
     fi
+    
+    if [[ ! -n "$(ls -A /images/$docker_dir)" ]]; then
+        echo "WARNING $docker_dir directory is empty. Skipping the 'skopeo sync' operation for $docker_dir"
+        return 0
+    fi
 
+    
     # Ensure $docker_dir ends with exactly one slash
     docker_dir="${docker_dir%%+(/)}/"
 
