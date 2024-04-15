@@ -1,7 +1,27 @@
 #!/usr/bin/env bash
-
-# Copyright 2022 Hewlett Packard Enterprise Development LP
-
+#
+# MIT License
+#
+# (C) Copyright 2022, 2024 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
 # Note: Requires the create_task groovy script
 
 command -v jq >/dev/null 2>&1 || { echo >&2 "command not found: jq"; exit 1; }
@@ -25,7 +45,7 @@ repo="$1"
 taskid="$(get-task-id "$repo")"
 
 if [[ -z "$taskid" ]]; then
-    echo -n >&2 "Creating task to rebuild Yum repodata for ${repo}..."
+    echo -n >&2 "Creating task to rebuild Yum repodata for ${repo} ..."
 
     status="$(curl -sfk -w "\ncode=%{http_code}" -X POST \
         "${URL}/v1/script/create_task/run" \
@@ -41,7 +61,7 @@ if [[ -z "$taskid" ]]; then
     [[ -n "$taskid" ]] || { echo >&2 "Failed to get task ID"; exit 2; }
 fi
 
-echo -n >&2 "Running rebuild task ${taskid}..."
+echo -n >&2 "Running rebuild task ${taskid} ..."
 status="$(curl -sfk -w "%{http_code}" -X POST "${URL}/v1/tasks/${taskid}/run")"
 if [[ "$status" = "204" ]]; then echo >&2 " OK"; else echo " $status FAIL"; exit 22; fi
 
