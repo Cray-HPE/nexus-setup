@@ -31,7 +31,7 @@ trap "{ rm -rf '$WORKDIR'; }" EXIT
 
 # Create blobstores
 while [[ $# -gt 0 ]]; do
-    echo "$0 processing $1"
+    echo "DEBUG $0: Processing $1"
     nblobs=$(yq r -d '*' -X -c -l "$1")
 
     for (( i=0; i<nblobs; i++ )); do
@@ -49,12 +49,12 @@ while [[ $# -gt 0 ]]; do
             [[ -z $S3_SECRET_KEY ]] || yq w -i "$tmpfile" 'bucketConfiguration.bucketSecurity.secretAccessKey' "$S3_SECRET_KEY"
             [[ -z $S3_ENDPOINT ]]   || yq w -i "$tmpfile" 'bucketConfiguration.advancedBucketConnection.endpoint' "$S3_ENDPOINT"
         else
-            echo >&2 "error: unknown blobstore type: ${blobstore_name}"
+            echo >&2 "ERROR Unknown blobstore type: ${blobstore_name}. Exiting"
             exit 1
         fi
 
         # First try to create
-        echo -n >&2 "Creating ${blobstore_type} blobstore: ${blobstore_name} ... "
+        echo -n >&2 "DEBUG Creating ${blobstore_type} blobstore: ${blobstore_name} ... "
         yq r -j "$tmpfile" | curl -sfk -w "%{http_code}" \
             --connect-timeout "${CURL_CONNECT_TIMEOUT:-10}" \
             --retry-connrefused \
@@ -64,12 +64,12 @@ while [[ $# -gt 0 ]]; do
             -d @-
         status=$?
         if [[ $status -eq 0 ]]; then
-            echo >&2 " OK created"
+            echo >&2 "INFO Successfully created ${blobstore_type} blobstore: ${blobstore_name}"
         else
-            echo >&2 " FAIL"
+            echo >&2 "ERROR Failed to create ${blobstore_type} blobstore: ${blobstore_name}"
 
             # Failed to create, try to update
-            echo -n >&2 "Updating ${blobstore_type} blobstore: ${blobstore_name} ... "
+            echo -n >&2 "DEBUG Updating ${blobstore_type} blobstore: ${blobstore_name} as creating failed ... "
             yq r -j "$tmpfile" | curl -sfk -w "%{http_code}" \
                 --connect-timeout "${CURL_CONNECT_TIMEOUT:-10}" \
                 --retry-connrefused \
@@ -79,9 +79,9 @@ while [[ $# -gt 0 ]]; do
                 -d @-
             status=$?
             if [[ $status -eq 0 ]]; then
-                echo >&2 " OK updated"
+                echo >&2 "INFO Successfully updated ${blobstore_type} blobstore: ${blobstore_name}"
             else
-                echo >&2 " FAIL"
+                echo >&2 "ERROR Failed to update ${blobstore_type} blobstore: ${blobstore_name}"
                 exit $status
             fi
         fi

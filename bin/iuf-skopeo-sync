@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -23,11 +23,25 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+shopt -s extglob
+
 usage(){
     echo "Usage: $0 JSON_IUF_DOCKER_META"
     echo "Uploads container images from the location(s) given by the JSON_IUF_DOCKER_META structure to the Nexus registry."
     exit 0 # Without error since the parameter may not have been included.
 }
+
+# Store results in this file.
+RESULTS_FILE="/results/records.yaml"
+RESULTS_HEADER_FILE=$(mktemp)
+mkdir -p "$(dirname "$RESULTS_FILE")"
+cat << EOF > "$RESULTS_HEADER_FILE"
+component_versions:
+  docker:
+EOF
+
+# Ensure we have written something to the output file when we exit
+trap 'ensure-results-file-exists $RESULTS_FILE' EXIT
 
 # usage: process DIRECTORY
 #
@@ -42,24 +56,61 @@ usage(){
 process(){
     docker_dir="$1"
     if [[ ! -d "/images/$docker_dir" ]]; then
-        echo "$0: Invalid directory $src"
-        echo "Skipping the skopeo sync operation for $docker_dir"
+        echo "ERROR $0: Invalid directory $src. Skipping the 'skopeo sync' operation for $docker_dir"
         return 1
     fi
 
-    # Remove the leading path element. 
-    ns_path=$(echo $docker_dir|cut -d'/' -f2-)
+    # Ensure $docker_dir ends with exactly one slash
+    docker_dir="${docker_dir%%+(/)}/"
 
-    skopeo sync --scoped \
+    result=$(skopeo sync --scoped \
         --src dir --dest docker \
         --dest-creds "${NEXUS_USERNAME:-admin}:${NEXUS_PASSWORD}" \
         --dest-tls-verify=false \
-        /images/"$docker_dir" ${NEXUS_REGISTRY:-registry.local}/$ns_path
+        /images/"$docker_dir" "${NEXUS_REGISTRY:-registry.local}" 2>&1)         
+    if [ $? -eq 0 ]; then
+        # Record results for each image. Note that we have to search the directory for
+        # things that appear to be docker images here, which unfortunately is not directly
+        # looking at the result of the `skopeo sync` command.
+        find "/images/$docker_dir" -name "manifest.json" | while read -r manifest_file; do
+            # Get the path to the image relative to the specified $docker_dir, as that
+            # is the name of the image that was uploaded. For example, if images are found
+            # in /images/docker/cray/IMAGE:VERSION and $docker_dir is 'docker/', images were
+            # uploaded as "cray/IMAGE:VERSION".
+            relative_manifest_path="${manifest_file##/images/${docker_dir}}"
+            image_dir="$(dirname "$relative_manifest_path")"
+            image_name="$(cut -d":" -f 1 <<< "$image_dir")"
+            image_version="$(cut -d":" -f 2 <<< "$image_dir")"
+            echo "DEBUG Adding entry in 'records.yaml' file for image: ${image_name}:${image_version}"
+            record_result "$image_name" "$image_version"
+        done
+    else
+        result=$(echo "$result" | sed -e 's/^/DEBUG /')
+        echo -e "DEBUG <skopeo sync --scoped --src dir --dest docker --dest-creds "${NEXUS_USERNAME:-admin}:<password>" --dest-tls-verify=false /images/"$docker_dir" "${NEXUS_REGISTRY:-registry.local}"> failed with\n\n$result"        
+        return 1
+    fi
 }
 
+# usage: record_result IMAGE_NAME IMAGE_VERSION
+#
+# Writes part of the results to the $RESULTS_FILE.
+#
+function record_result(){
+    # append records for a single repository to the results file.
+    image_name="$1"
+    image_version="$2"
+    # Create results file when recording the first result.
+    if [[ ! -f "$RESULTS_FILE" ]]; then
+        mv "$RESULTS_HEADER_FILE" "$RESULTS_FILE"
+    fi
+    echo "  - name: '${image_name}'" >> "$RESULTS_FILE"
+    echo "    version: '${image_version}'" >> "$RESULTS_FILE"
+}
+
+
 if [[ $# -eq 0 ]]; then
-    echo "Missing docker context from the IUF manifest."
-    echo "Skipping this operation."
+    echo "ERROR Docker context not passed from the IUF manifest. Skipping
+    running the 'iuf-skopeo-sync' script"
     usage
 fi
 
@@ -68,16 +119,24 @@ fi
 json_docker_context="$1"
 docker_dirs=$(echo "$json_docker_context" | jq '.docker | length')
 if [[ -z "$docker_dirs" ]]; then
-    echo "Did not receive any docker directory context."
+    echo "ERROR Docker directory context not received from IUF. Exiting"
     exit 0
 fi
 
+exit_code=0
 for (( i=0; i<${docker_dirs}; i++ ));
 do
     path=$(echo "$json_docker_context" | jq -r '.docker['$i'].path')
-    echo "Processing docker images at $path"
-    process "$path"
-    rc=$?
-    echo "Return code was $rc"
-    # TBD - decide if we should just log the error or exit at this point.
+    echo "DEBUG Processing docker images in directory: $path"
+    if ! process "$path"; then
+        exit_code=1
+    fi
 done
+
+if [ $exit_code -eq 0 ]; then
+    echo "INFO 'iuf-skopeo-sync' script completed successfully with Docker directory context "$json_docker_context""
+else
+    echo "ERROR 'iuf-skopeo-sync' script failed with Docker directory context "$json_docker_context""
+fi  
+exit $exit_code
+
