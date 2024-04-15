@@ -149,12 +149,12 @@ repositories:
 ncn-m001:~ # curl -sSk https://packages.local/service/rest/v1/repositories | jq -r '.[] | .name'
 ```
 
-The `/service/rest/beta/repositories` endpoint provides a more detailed
+The `/service/rest/v1/repositories` endpoint provides a more detailed
 listing of available repositories. For example, the object returned for the
 `csm-sle-15sp2` repository is:
 
 ```bash
-ncn-m001:~ # curl -sSk https://packages.local/service/rest/beta/repositories | jq -r '.[] | select(.name == "csm-sle-15sp2")'
+ncn-m001:~ # curl -sSk https://packages.local/service/rest/v1/repositories | jq -r '.[] | select(.name == "csm-sle-15sp2")'
 {
   "name": "csm-sle-15sp2",
   "format": "raw",
@@ -316,11 +316,11 @@ https://packages.local/repository/csm-sle-15sp2/x86_64/manifestgen-1.3.1-2021020
 #### Create Repository
 
 A repository may be created by HTTP `POST` to
-`/service/rest/beta/repositories/<format>/<type>` with an appropriate body
+`/service/rest/v1/repositories/<format>/<type>` with an appropriate body
 that defines the repository settings. For example, to create a `hosted` `yum`
 repository for RPMs using the `default` blob store, HTTP `POST` the following
 body (replace `<name>` as appropriate) to
-`/service/rest/beta/repositories/yum/hosted`:
+`/service/rest/v1/repositories/yum/hosted`:
 
 ```json
 {
@@ -345,7 +345,7 @@ Note the `storage` and `yum` options to control repository behavior.
 
 Whereas to create a `proxy` repository to an upstream repository given by
 `<url>`, HTTP `POST` the following body (replace `<name>` and `<url>` as
-appropriate) to `/service/rest/beta/repositories/raw/proxy`:
+appropriate) to `/service/rest/v1/repositories/raw/proxy`:
 
 ```json
 {
@@ -379,7 +379,7 @@ appropriate) to `/service/rest/beta/repositories/raw/proxy`:
 
 Note the `proxy`, `httpClient`, and `negativeCache` options that affect proxy
 behavior. It may be helpful to create a repository via the Web UI then
-retrieve it's configuration via the `/service/rest/beta/repositories`
+retrieve it's configuration via the `/service/rest/v1/repositories`
 endpoint (see below) in order to discover how to set appropriate settings.
 
 Installers typically define Nexus repositories in `nexus-repositories.yaml`
@@ -391,14 +391,14 @@ and rely on the `nexus-repositories-create` helper script included in the
 #### Update Repository
 
 Repository configration may be updated sending HTTP `PUT` to
-`/service/rest/beta/repositories/<format>/<type>/<name>`. For example suppose
+`/service/rest/v1/repositories/<format>/<type>/<name>`. For example suppose
 the `yum` `hosted` repository `test` is currently online and we want to
 ensure it is offline instead. Send an HTTP `PUT` to
-`/service/rest/beta/repositories/yum/hosted/test` after getting the current
+`/service/rest/v1/repositories/yum/hosted/test` after getting the current
 configuration and setting the `online` attribute to `true`:
 
 ```bash
-ncn-m001:~ # curl -sS https://packages.local/service/rest/beta/repositories | jq '.[] | select(.name == "test")'
+ncn-m001:~ # curl -sS https://packages.local/service/rest/v1/repositories | jq '.[] | select(.name == "test")'
 {
   "name": "test",
   "url": "https://packages.local/repository/test",
@@ -416,14 +416,14 @@ ncn-m001:~ # curl -sS https://packages.local/service/rest/beta/repositories | jq
   "format": "yum",
   "type": "hosted"
 }
-ncn-m001:~ # curl -sS https://packages.local/service/rest/beta/repositories | jq '.[] | select(.name == "test") | .online = false' | curl -sSi -X PUT 'https://packages.local/service/rest/beta/repositories/yum/hosted/test' -H "Content-Type: application/json" -d @-
+ncn-m001:~ # curl -sS https://packages.local/service/rest/v1/repositories | jq '.[] | select(.name == "test") | .online = false' | curl -sSi -X PUT 'https://packages.local/service/rest/v1/repositories/yum/hosted/test' -H "Content-Type: application/json" -d @-
 HTTP/2 204 
 date: Sat, 06 Mar 2021 17:55:57 GMT
 server: istio-envoy
 x-content-type-options: nosniff
 x-envoy-upstream-service-time: 9
 
-ncn-m001:~ # curl -sS https://packages.local/service/rest/beta/repositories | jq '.[] | select(.name == "test")'
+ncn-m001:~ # curl -sS https://packages.local/service/rest/v1/repositories | jq '.[] | select(.name == "test")'
 {
   "name": "test",
   "url": "https://packages.local/repository/test",
@@ -450,10 +450,10 @@ ncn-m001:~ # curl -sS https://packages.local/service/rest/beta/repositories | jq
 #### Delete Repository
 
 To delete a repository, send an HTTP `DELETE` to
-`/service/rest/beta/repositories/<name>`. For example,
+`/service/rest/v1/repositories/<name>`. For example,
 
 ```bash
-# curl -sfkSL -X DELETE "https://packages.local/service/rest/beta/repositories/<name>”
+# curl -sfkSL -X DELETE "https://packages.local/service/rest/v1/repositories/<name>”
 ```
 
 
@@ -461,7 +461,7 @@ To delete a repository, send an HTTP `DELETE` to
 #### Create Blob Store
 
 A `File` type blob store may be created by HTTP `POST` to
-`/service/rest/beta/blobstores/file` with the following body (replace
+`/service/rest/v1/blobstores/file` with the following body (replace
 `<name>` as appropriate):
 
 ```json
@@ -828,7 +828,7 @@ registry.local from automatically gaining `admin` privileges.
     `true`:
 
     ```bash
-    ncn-m001:~ # curl -sS https://packages.local/service/rest/beta/repositories | jq '.[] | select(.name == "registry") | .docker.forceBasicAuth = true' | curl -sSi -X PUT 'https://packages.local/service/rest/beta/repositories/docker/hosted/registry' -H "Content-Type: application/json" -d @-
+    ncn-m001:~ # curl -sS https://packages.local/service/rest/v1/repositories | jq '.[] | select(.name == "registry") | .docker.forceBasicAuth = true' | curl -sSi -X PUT 'https://packages.local/service/rest/v1/repositories/docker/hosted/registry' -H "Content-Type: application/json" -d @-
     ```
 
 2.  Patch the `nexus` VirtualService resource in the `nexus` namespace to
