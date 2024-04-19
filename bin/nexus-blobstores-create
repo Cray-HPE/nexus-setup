@@ -1,7 +1,27 @@
 #!/usr/bin/env bash
-
-# Copyright 2022 Hewlett Packard Enterprise Development LP
-
+#
+# MIT License
+#
+# (C) Copyright 2022, 2024 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
 command -v yq >/dev/null 2>&1 || { echo >&2 "command not found: yq"; exit 1; }
 
 . "$(command -v nexus-ready)"
@@ -34,11 +54,11 @@ while [[ $# -gt 0 ]]; do
         fi
 
         # First try to create
-        echo -n >&2 "DEBUG Creating ${blobstore_type} blobstore: ${blobstore_name}... "
+        echo -n >&2 "DEBUG Creating ${blobstore_type} blobstore: ${blobstore_name} ... "
         yq r -j "$tmpfile" | curl -sfk -w "%{http_code}" \
             --connect-timeout "${CURL_CONNECT_TIMEOUT:-10}" \
             --retry-connrefused \
-            -X POST "${URL}/beta/blobstores/${blobstore_type}" \
+            -X POST "${URL}/v1/blobstores/${blobstore_type}" \
             -H 'Accept: application/json' \
             -H 'Content-Type:application/json' \
             -d @-
@@ -49,11 +69,11 @@ while [[ $# -gt 0 ]]; do
             echo >&2 "ERROR Failed to create ${blobstore_type} blobstore: ${blobstore_name}"
 
             # Failed to create, try to update
-            echo -n >&2 "DEBUG Updating ${blobstore_type} blobstore: ${blobstore_name} as creating failed... "
+            echo -n >&2 "DEBUG Updating ${blobstore_type} blobstore: ${blobstore_name} as creating failed ... "
             yq r -j "$tmpfile" | curl -sfk -w "%{http_code}" \
                 --connect-timeout "${CURL_CONNECT_TIMEOUT:-10}" \
                 --retry-connrefused \
-                -X PUT "${URL}/beta/blobstores/${blobstore_type}/${blobstore_name}" \
+                -X PUT "${URL}/v1/blobstores/${blobstore_type}/${blobstore_name}" \
                 -H 'Accept: application/json' \
                 -H 'Content-Type:application/json' \
                 -d @-
