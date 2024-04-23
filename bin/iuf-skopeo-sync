@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -59,7 +59,13 @@ process(){
         echo "ERROR $0: Invalid directory $src. Skipping the 'skopeo sync' operation for $docker_dir"
         return 1
     fi
+    
+    if [[ ! -n "$(ls -A /images/$docker_dir)" ]]; then
+        echo "WARNING $docker_dir directory is empty. Skipping the 'skopeo sync' operation for $docker_dir"
+        return 0
+    fi
 
+    
     # Ensure $docker_dir ends with exactly one slash
     docker_dir="${docker_dir%%+(/)}/"
 
