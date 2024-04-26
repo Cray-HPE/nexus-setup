@@ -32,7 +32,7 @@ fi
 reponame="$1"
 interval="${2:-5}"
 
-echo >&2 "Waiting for Nexus to create repository metadata for ${reponame} ..."
+echo >&2 "Waiting for Nexus to create repository metadata for ${reponame}..."
 
 # Note the use of NEXUS_URL as opposed to URL since this NOT using a REST API
 # endpoint.

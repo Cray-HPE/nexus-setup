@@ -45,7 +45,7 @@ repo="$1"
 taskid="$(get-task-id "$repo")"
 
 if [[ -z "$taskid" ]]; then
-    echo -n >&2 "Creating task to rebuild Yum repodata for ${repo} ..."
+    echo -n >&2 "Creating task to rebuild Yum repodata for ${repo}..."
 
     status="$(curl -sfk -w "\ncode=%{http_code}" -X POST \
         "${URL}/v1/script/create_task/run" \
@@ -61,7 +61,7 @@ if [[ -z "$taskid" ]]; then
     [[ -n "$taskid" ]] || { echo >&2 "Failed to get task ID"; exit 2; }
 fi
 
-echo -n >&2 "Running rebuild task ${taskid} ..."
+echo -n >&2 "Running rebuild task ${taskid}..."
 status="$(curl -sfk -w "%{http_code}" -X POST "${URL}/v1/tasks/${taskid}/run")"
 if [[ "$status" = "204" ]]; then echo >&2 " OK"; else echo " $status FAIL"; exit 22; fi
 

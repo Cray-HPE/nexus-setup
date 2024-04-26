@@ -49,7 +49,7 @@ while [[ $# -gt 0 ]]; do
     name="${path##*/}"
     name="${name%.groovy}"
 
-    echo -n >&2 "Upload script: ${name} ..."
+    echo -n >&2 "Upload script: ${name}..."
 
     if curl -sfk -w "%{http_code}" -X GET "${URL}/v1/script/${name}" >/dev/null; then
         # Script already exists
