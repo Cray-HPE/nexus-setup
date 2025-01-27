@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2022 Hewlett Packard Enterprise Development LP
+# Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 
 if [[ $# -ne 2 ]]; then
     echo >&2 "usage: ${0##*/} , two arguments required: SRC-DIRECTORY DEST-REPOSITORY "
@@ -25,7 +25,9 @@ upload-asset-yum() {
     asset="/${file##$path}"
 
     status=""
-    while [[ "$status" != "204" && "$status" != "400" ]]; do
+    max_retry=3
+    retry_count=0
+    while [[ "$status" != "204" && "$status" != "400" ]] && [ $retry_count -lt $max_retry ]; do
         status="$(curl -sfk \
             --retry-connrefused \
             --retry "${CURL_RETRY:-36}" \
@@ -38,9 +40,17 @@ upload-asset-yum() {
             -F "yum.asset=@${file}")"
         echo "DEBUG <curl to URL  ${URL}/v1/components?repository=${repo}> completed with: $status"
         status="${status%% *}"
+        retry_count=$((retry_count + 1))
     done
 
-    if [[ "$status" = "204" ]]; then echo "INFO Repo created "; else echo "INFO Repo already exists, no action needed"; fi
+    if [[ "$status" = "204" ]]; then
+        echo "INFO Created repository ${repo}";
+    elif [[ "$status" = "400" ]]; then
+        echo "INFO Repository ${repo} already exists";
+    else
+        echo "ERROR Unable to Create Repository ${repo}, max attempts completed"
+        exit 1
+    fi
 }
 
 export URL path repo
