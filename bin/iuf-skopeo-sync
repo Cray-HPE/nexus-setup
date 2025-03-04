@@ -92,7 +92,7 @@ process(){
         done
     else
         result=$(echo "$result" | sed -e 's/^/DEBUG /')
-        echo -e "DEBUG <skopeo sync --scoped --src dir --dest docker --dest-creds "${NEXUS_USERNAME:-admin}:${NEXUS_PASSWORD}" --dest-tls-verify=false /images/"$docker_dir" "${NEXUS_REGISTRY:-registry.local}"> failed with\n\n$result"        
+        echo -e "DEBUG <skopeo sync --scoped --src dir --dest docker --dest-creds "NEXUS_USERNAME:NEXUS_PASSWORD" --dest-tls-verify=false /images/"$docker_dir" "${NEXUS_REGISTRY:-registry.local}"> failed with\n\n$result"        
         return 1
     fi
 }
