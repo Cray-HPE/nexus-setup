@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -92,7 +92,7 @@ process(){
         done
     else
         result=$(echo "$result" | sed -e 's/^/DEBUG /')
-        echo -e "DEBUG <skopeo sync --scoped --src dir --dest docker --dest-creds "${NEXUS_USERNAME:-admin}:<password>" --dest-tls-verify=false /images/"$docker_dir" "${NEXUS_REGISTRY:-registry.local}"> failed with\n\n$result"        
+        echo -e "DEBUG <skopeo sync --scoped --src dir --dest docker --dest-creds "NEXUS_USERNAME:NEXUS_PASSWORD" --dest-tls-verify=false /images/"$docker_dir" "${NEXUS_REGISTRY:-registry.local}"> failed with\n\n$result"        
         return 1
     fi
 }
