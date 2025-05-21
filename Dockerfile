@@ -1,4 +1,4 @@
-# Copyright 2021 Hewlett Packard Enterprise Development LP
+# Copyright 2021,2025 Hewlett Packard Enterprise Development LP
 
 FROM artifactory.algol60.net/docker.io/library/alpine
 
@@ -17,5 +17,5 @@ COPY ./groovy/*.groovy /usr/local/share/nexus-setup/groovy/
 
 COPY ./bin/* /usr/local/bin/
 RUN chmod +x /usr/local/bin/*
-
+COPY enable-signatures.yaml /etc/containers/registries.d/enable-signatures.yaml
 CMD [ "nexus-ready" ]
