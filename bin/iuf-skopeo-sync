@@ -69,7 +69,7 @@ process(){
     # Ensure $docker_dir ends with exactly one slash
     docker_dir="${docker_dir%%+(/)}/"
 
-    result=$(skopeo sync --all --scoped \
+    result=$(skopeo sync --all --remove-signatures --scoped \
         --src dir --dest docker \
         --dest-creds "${NEXUS_USERNAME:-admin}:${NEXUS_PASSWORD}" \
         --dest-tls-verify=false \
